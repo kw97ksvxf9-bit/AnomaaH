@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>ANOMAAH — Superadmin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{brand:{50:'#eef7ff',100:'#d9edff',200:'#bce0ff',300:'#8eceff',400:'#59b2ff',500:'#3390ff',600:'#1570f5',700:'#0e5ae1',800:'#1149b6',900:'#14408f'}}}}}</script>
+  <style>
+    body{font-family:'Inter',system-ui,-apple-system,sans-serif}
+    .stat-card{transition:transform .15s,box-shadow .15s;cursor:pointer}
+    .stat-card:hover{transform:translateY(-3px);box-shadow:0 8px 25px -5px rgba(0,0,0,.12)}
+    .status-badge{font-size:.7rem;padding:2px 8px;border-radius:9999px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+    .fade-in{animation:fadeIn .4s ease-out}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    .table-row:hover{background:#f8fafc}
+    .skeleton{background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    ::-webkit-scrollbar{width:6px;height:6px}
+    ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+    .modal-overlay.active{opacity:1;pointer-events:auto}
+    .modal-box{background:#fff;border-radius:12px;box-shadow:0 25px 50px -12px rgba(0,0,0,.25);max-width:680px;width:95%;max-height:85vh;overflow-y:auto;transform:scale(.95);transition:transform .2s}
+    .modal-overlay.active .modal-box{transform:scale(1)}
+    .fab{position:fixed;bottom:24px;right:24px;z-index:150;width:56px;height:56px;border-radius:50%;background:#1570f5;color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 6px 20px rgba(21,112,245,.4);cursor:pointer;transition:transform .2s,box-shadow .2s;border:none}
+    .fab:hover{transform:scale(1.08);box-shadow:0 8px 25px rgba(21,112,245,.5)}
+    .fab-menu{position:fixed;bottom:90px;right:24px;z-index:150;background:#fff;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.15);min-width:220px;padding:8px 0;opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .2s,transform .2s}
+    .fab-menu.open{opacity:1;pointer-events:auto;transform:translateY(0)}
+    .fab-item{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:.875rem;color:#334155;cursor:pointer;transition:background .15s}
+    .fab-item:hover{background:#f1f5f9}
+    .breakdown-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9}
+    .breakdown-row:last-child{border-bottom:none}
+    .enroll-option{border:2px solid #e2e8f0;border-radius:12px;padding:24px;cursor:pointer;transition:all .2s;text-align:center}
+    .enroll-option:hover{border-color:#1570f5;background:#eef7ff;transform:translateY(-2px);box-shadow:0 4px 12px rgba(21,112,245,.15)}
+    .form-input{width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:10px 14px;font-size:.875rem;transition:border-color .15s,box-shadow .15s}
+    .form-input:focus{outline:none;border-color:#1570f5;box-shadow:0 0 0 3px rgba(21,112,245,.1)}
+    .form-label{display:block;font-size:.8rem;font-weight:600;color:#475569;margin-bottom:4px}
+    .cred-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;font-family:monospace;font-size:.875rem;word-break:break-all}
+    .tab-btn{padding:8px 16px;font-size:.8rem;font-weight:600;border-radius:8px 8px 0 0;cursor:pointer;border:1px solid transparent;transition:all .15s;color:#64748b}
+    .tab-btn.active{background:#fff;border-color:#e2e8f0;border-bottom-color:#fff;color:#0f172a}
+    .tab-btn:not(.active):hover{background:#f8fafc}
+    .payout-status{font-size:.65rem;padding:2px 6px;border-radius:4px;font-weight:700;text-transform:uppercase}
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+<!-- NAVBAR -->
+<nav class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center font-bold text-sm">P</div>
+      <span class="font-bold text-lg hidden sm:block tracking-wide">ANOMAAH Admin</span>
+    </div>
+    <div class="flex items-center gap-2 sm:gap-4">
+      <button onclick="openEnrollModal()" class="flex items-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-1.5 bg-emerald-600 rounded-md hover:bg-emerald-700 transition font-medium">
+        <span class="text-base leading-none">+</span> Enroll
+      </button>
+      <span id="loginStatus" class="text-xs sm:text-sm text-slate-400">Checking...</span>
+      <a href="/static/login.html" id="loginBtn" class="hidden text-xs sm:text-sm px-3 py-1.5 bg-brand-600 rounded-md hover:bg-brand-700 transition font-medium">Sign In</a>
+      <button id="logoutBtn" class="hidden text-xs sm:text-sm px-3 py-1.5 border border-slate-600 rounded-md hover:bg-slate-800 transition">Sign Out</button>
+    </div>
+  </div>
+</nav>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+  <div class="mb-6">
+    <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">Superadmin Dashboard</h1>
+    <p class="text-sm text-slate-500 mt-1">Platform overview · Revenue · Companies · Orders</p>
+  </div>
+
+  <!-- STAT CARDS -->
+  <section id="statsSection" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8 fade-in">
+    <div class="skeleton h-24 col-span-2 sm:col-span-3 lg:col-span-6"></div>
+  </section>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Orders Table -->
+    <section class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden fade-in">
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div><h2 class="font-semibold text-lg">Recent Orders</h2><p class="text-xs text-slate-400 mt-0.5" id="ordersSubtitle">Loading...</p></div>
+        <button onclick="fetchOrders()" class="text-xs px-3 py-1.5 border border-slate-200 rounded-md hover:bg-slate-50 transition">↻ Refresh</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm"><thead><tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+          <th class="px-5 py-3 text-left font-medium">ID</th><th class="px-5 py-3 text-left font-medium">Route</th><th class="px-5 py-3 text-right font-medium">Amount</th><th class="px-5 py-3 text-center font-medium">Status</th><th class="px-5 py-3 text-left font-medium">Created</th>
+        </tr></thead><tbody id="ordersBody" class="divide-y divide-slate-100"><tr><td colspan="5" class="px-5 py-8 text-center text-slate-400">Loading...</td></tr></tbody></table>
+      </div>
+    </section>
+
+    <!-- Activity Feed -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden fade-in">
+      <div class="px-5 py-4 border-b border-slate-100"><h2 class="font-semibold text-lg">Activity Feed</h2><p class="text-xs text-slate-400 mt-0.5">Recent events</p></div>
+      <div id="activityFeed" class="p-4 space-y-3 max-h-96 overflow-y-auto"><div class="skeleton h-12 mb-2"></div><div class="skeleton h-12 mb-2"></div><div class="skeleton h-12"></div></div>
+    </section>
+
+    <!-- Companies & Merchants Table (no riders shown) -->
+    <section class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden fade-in" id="partnersSection">
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div><h2 class="font-semibold text-lg">Companies & Merchants</h2><p class="text-xs text-slate-400 mt-0.5" id="partnersSubtitle">Manage partners (riders are managed by their companies)</p></div>
+        <button onclick="fetchPartners()" class="text-xs px-3 py-1.5 border border-slate-200 rounded-md hover:bg-slate-50 transition">↻ Refresh</button>
+      </div>
+      <div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+        <th class="px-5 py-3 text-left font-medium">Name</th><th class="px-5 py-3 text-center font-medium">Role</th><th class="px-5 py-3 text-center font-medium">Status</th><th class="px-5 py-3 text-center font-medium">Actions</th>
+      </tr></thead><tbody id="partnersBody" class="divide-y divide-slate-100"><tr><td colspan="4" class="px-5 py-8 text-center text-slate-400">Loading...</td></tr></tbody></table></div>
+    </section>
+
+    <!-- Audit Log -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden fade-in">
+      <div class="px-5 py-4 border-b border-slate-100"><h2 class="font-semibold text-lg">Audit Log</h2><p class="text-xs text-slate-400 mt-0.5">Admin actions</p></div>
+      <div id="auditLog" class="p-4"><div class="skeleton h-8 mb-2"></div><div class="skeleton h-8 mb-2"></div><div class="skeleton h-8"></div></div>
+    </section>
+
+    <!-- Pending Merchants -->
+    <section id="pendingMerchantsSection" class="lg:col-span-3 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden fade-in hidden">
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div><h2 class="font-semibold text-lg">Pending Merchants</h2><p class="text-xs text-slate-400 mt-0.5">Awaiting approval</p></div>
+        <div class="flex gap-2">
+          <button onclick="fetchMerchants()" class="text-xs px-3 py-1.5 border border-slate-200 rounded-md hover:bg-slate-50 transition">↻ Refresh</button>
+          <button onclick="batchApproveMerchants()" class="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition">Batch Approve</button>
+        </div>
+      </div>
+      <div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+        <th class="px-5 py-3 text-left font-medium"><input type="checkbox" id="selectAllMerchants" class="w-4 h-4 rounded"/></th>
+        <th class="px-5 py-3 text-left font-medium">Username</th><th class="px-5 py-3 text-left font-medium">Store</th><th class="px-5 py-3 text-left font-medium">Phone</th><th class="px-5 py-3 text-center font-medium">Actions</th>
+      </tr></thead><tbody id="merchantsBody" class="divide-y divide-slate-100"></tbody></table></div>
+    </section>
+
+    <!-- Pending Companies -->
+    <section id="pendingCompaniesSection" class="lg:col-span-3 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden fade-in hidden">
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div><h2 class="font-semibold text-lg">Pending Rider Companies</h2><p class="text-xs text-slate-400 mt-0.5">Awaiting approval</p></div>
+        <div class="flex gap-2">
+          <button onclick="fetchCompanies()" class="text-xs px-3 py-1.5 border border-slate-200 rounded-md hover:bg-slate-50 transition">↻ Refresh</button>
+          <button onclick="batchApproveCompanies()" class="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition">Batch Approve</button>
+        </div>
+      </div>
+      <div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+        <th class="px-5 py-3 text-left font-medium"><input type="checkbox" id="selectAllCompanies" class="w-4 h-4 rounded"/></th>
+        <th class="px-5 py-3 text-left font-medium">Company</th><th class="px-5 py-3 text-left font-medium">Contact</th><th class="px-5 py-3 text-left font-medium">Phone</th><th class="px-5 py-3 text-center font-medium">Actions</th>
+      </tr></thead><tbody id="companiesBody" class="divide-y divide-slate-100"></tbody></table></div>
+    </section>
+  </div>
+</div>
+
+<!-- MODAL OVERLAY -->
+<div id="modalOverlay" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+      <h3 id="modalTitle" class="font-semibold text-lg text-slate-900"></h3>
+      <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 text-xl">&times;</button>
+    </div>
+    <div id="modalBody" class="px-6 py-4"></div>
+  </div>
+</div>
+
+<!-- ENROLL MODAL -->
+<div id="enrollOverlay" class="modal-overlay" onclick="if(event.target===this)closeEnroll()">
+  <div class="modal-box" style="max-width:520px">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+      <h3 id="enrollTitle" class="font-semibold text-lg text-slate-900">Enroll New Partner</h3>
+      <button onclick="closeEnroll()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 text-xl">&times;</button>
+    </div>
+    <div id="enrollBody" class="px-6 py-5"></div>
+  </div>
+</div>
+
+<!-- FAB + MENU -->
+<button class="fab" id="fabBtn" onclick="toggleFab()">⚡</button>
+<div class="fab-menu" id="fabMenu">
+  <div class="px-4 py-2 text-xs text-slate-400 uppercase tracking-wider font-semibold">Quick Actions</div>
+  <div class="fab-item" onclick="openEnrollModal();closeFab()">➕ Enroll Partner</div>
+  <div class="fab-item" onclick="showFinancialsModal();closeFab()">💰 Revenue & Payments</div>
+  <div class="fab-item" onclick="showCancelledModal();closeFab()">❌ Cancelled Orders</div>
+  <div class="fab-item" onclick="showPendingMerchants()">🏪 Pending Merchants</div>
+  <div class="fab-item" onclick="showPendingCompanies()">🏢 Pending Companies</div>
+  <div class="fab-item" onclick="fetchAuditLog();closeFab()">📋 Audit Log</div>
+  <div class="fab-item" onclick="exportData()">📥 Export Data</div>
+  <div class="fab-item" onclick="window.location.reload()">🔄 Refresh All</div>
+  <div class="h-px bg-slate-100 my-1"></div>
+  <div class="fab-item text-rose-600" onclick="doLogout()">🚪 Sign Out</div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="fixed bottom-6 left-6 bg-slate-900 text-white px-5 py-3 rounded-lg shadow-lg text-sm hidden z-50 transition-all"><span id="toastMsg"></span></div>
+
+<script>
+/* ── Helpers ── */
+function toast(msg,type){const el=document.getElementById('toast'),m=document.getElementById('toastMsg');m.textContent=msg;el.className='fixed bottom-6 left-6 text-white px-5 py-3 rounded-lg shadow-lg text-sm z-50';el.classList.add(type==='error'?'bg-rose-600':type==='success'?'bg-emerald-600':'bg-slate-900');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.add('hidden'),3500)}
+function statusBadge(s){const c={PENDING:'bg-amber-100 text-amber-700',ASSIGNED:'bg-blue-100 text-blue-700',IN_TRANSIT:'bg-indigo-100 text-indigo-700',DELIVERED:'bg-emerald-100 text-emerald-700',CANCELLED:'bg-rose-100 text-rose-700'};return '<span class="status-badge '+(c[s]||'bg-slate-100 text-slate-600')+'">'+s+'</span>'}
+function roleBadge(r){const v=(r||'').toLowerCase();const c={superadmin:'bg-purple-100 text-purple-700',merchant:'bg-blue-100 text-blue-700',company_admin:'bg-teal-100 text-teal-700',rider:'bg-amber-100 text-amber-700'};return '<span class="status-badge '+(c[v]||'bg-slate-100 text-slate-600')+'">'+v.replace('_',' ')+'</span>'}
+function timeAgo(dt){if(!dt)return'\u2014';const d=new Date(dt),diff=(Date.now()-d.getTime())/1000;if(diff<60)return'just now';if(diff<3600)return Math.floor(diff/60)+'m ago';if(diff<86400)return Math.floor(diff/3600)+'h ago';return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
+function shortId(id){return id?id.substring(0,8):'\u2014'}
+function ghc(v){return 'GH\u20B5'+(v||0).toLocaleString(undefined,{minimumFractionDigits:2})}
+function payoutStatusBadge(s){const c={COMPLETED:'bg-emerald-100 text-emerald-700',REQUESTED:'bg-amber-100 text-amber-700',PENDING:'bg-amber-100 text-amber-700',FAILED:'bg-rose-100 text-rose-700',CANCELLED:'bg-slate-100 text-slate-600'};return '<span class="payout-status '+(c[(s||'').toUpperCase()]||'bg-slate-100 text-slate-600')+'">'+(s||'unknown')+'</span>'}
+
+/* ── Auth State ── */
+function showSignedIn(v){document.getElementById('loginBtn').classList.toggle('hidden',v);document.getElementById('logoutBtn').classList.toggle('hidden',!v);document.getElementById('loginStatus').textContent=v?'\u25cf Superadmin':'Not signed in';document.getElementById('loginStatus').className=v?'text-xs sm:text-sm text-emerald-400':'text-xs sm:text-sm text-slate-400'}
+document.getElementById('logoutBtn').onclick=()=>doLogout();
+async function doLogout(){await fetch('/api/logout',{method:'POST'});showSignedIn(false);toast('Signed out');setTimeout(()=>window.location.href='/static/login.html',500)}
+async function apiGet(path){try{const r=await fetch('/api'+path);if(r.status===401||r.status===403){showSignedIn(false);return null}if(!r.ok)return null;showSignedIn(true);return r.json()}catch(e){return null}}
+async function apiPost(path,body){try{const r=await fetch('/api'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});if(r.status===401||r.status===403){showSignedIn(false);return null}if(!r.ok){let d='Failed';try{d=(await r.json()).detail||d}catch(e){}toast(d,'error');return null}return r.json()}catch(e){return null}}
+
+/* ── Modal ── */
+function openModal(title,html){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=html;document.getElementById('modalOverlay').classList.add('active')}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('active')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeEnroll()}});
+
+/* ── FAB ── */
+let fabOpen=false;
+function toggleFab(){fabOpen=!fabOpen;document.getElementById('fabMenu').classList.toggle('open',fabOpen);document.getElementById('fabBtn').textContent=fabOpen?'✕':'⚡'}
+function closeFab(){fabOpen=false;document.getElementById('fabMenu').classList.remove('open');document.getElementById('fabBtn').textContent='⚡'}
+document.addEventListener('click',e=>{if(fabOpen&&!e.target.closest('.fab')&&!e.target.closest('.fab-menu'))closeFab()});
+function scrollToSection(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth'});closeFab()}
+
+/* ═══════════════════════════════════
+   ── FINANCIALS / REVENUE MODAL ──
+   ═══════════════════════════════════ */
+async function showFinancialsModal(){
+  openModal('💰 Platform Revenue & Payments','<div class="text-center py-8 text-slate-400">Loading financials...</div>');
+  const d=await apiGet('/admin/financials');
+  if(!d){document.getElementById('modalBody').innerHTML='<p class="text-rose-500 text-center py-4">Failed to load</p>';return}
+
+  let html='';
+  // Overview cards
+  html+='<div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">';
+  html+='<div class="bg-emerald-50 rounded-lg p-3 text-center"><div class="text-xs text-emerald-600 font-semibold">Total Revenue</div><div class="text-xl font-bold text-emerald-700">'+ghc(d.total_revenue)+'</div></div>';
+  html+='<div class="bg-blue-50 rounded-lg p-3 text-center"><div class="text-xs text-blue-600 font-semibold">Platform Commission</div><div class="text-xl font-bold text-blue-700">'+ghc(d.total_commissions)+'</div></div>';
+  html+='<div class="bg-amber-50 rounded-lg p-3 text-center"><div class="text-xs text-amber-600 font-semibold">Total Payouts</div><div class="text-xl font-bold text-amber-700">'+ghc(d.total_payouts)+'</div></div>';
+  html+='<div class="bg-rose-50 rounded-lg p-3 text-center"><div class="text-xs text-rose-600 font-semibold">Cancelled Lost</div><div class="text-xl font-bold text-rose-700">'+ghc(d.cancelled_revenue_lost)+'</div></div>';
+  html+='<div class="bg-violet-50 rounded-lg p-3 text-center"><div class="text-xs text-violet-600 font-semibold">Pending Payouts</div><div class="text-xl font-bold text-violet-700">'+(d.pending_payouts||0)+'</div></div>';
+  html+='<div class="bg-slate-50 rounded-lg p-3 text-center"><div class="text-xs text-slate-600 font-semibold">Failed Payouts</div><div class="text-xl font-bold text-rose-600">'+(d.failed_payouts||0)+'</div></div>';
+  html+='</div>';
+
+  // Tabs
+  html+='<div class="flex gap-1 border-b border-slate-200 mb-3">';
+  html+='<button class="tab-btn active" onclick="showFinTab(\'payouts\',this)">Payouts</button>';
+  html+='<button class="tab-btn" onclick="showFinTab(\'transactions\',this)">Transactions</button>';
+  html+='<button class="tab-btn" onclick="showFinTab(\'companies\',this)">Companies</button>';
+  html+='</div>';
+
+  // Payouts tab
+  html+='<div id="fin-payouts">';
+  if(d.payouts&&d.payouts.length){
+    html+='<div class="space-y-2 max-h-64 overflow-y-auto">';
+    d.payouts.forEach(p=>{
+      html+='<div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg text-sm">';
+      html+='<div><div class="font-medium">'+ghc(p.amount)+'</div><div class="text-xs text-slate-400">'+shortId(p.payout_id||p.id)+(p.schedule?' · '+p.schedule:'')+'</div></div>';
+      html+='<div class="flex items-center gap-2">'+payoutStatusBadge(p.status);
+      if(p.status==='FAILED') html+='<button onclick="retryPayout(\''+p.payout_id+'\')" class="text-xs px-2 py-1 bg-brand-600 text-white rounded hover:bg-brand-700">Retry</button>';
+      html+='</div></div>';
+    });
+    html+='</div>';
+  } else html+='<p class="text-sm text-slate-400 text-center py-4">No payouts yet</p>';
+  html+='</div>';
+
+  // Transactions tab
+  html+='<div id="fin-transactions" class="hidden">';
+  if(d.transactions&&d.transactions.length){
+    html+='<div class="space-y-2 max-h-64 overflow-y-auto">';
+    d.transactions.forEach(t=>{
+      html+='<div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg text-sm">';
+      html+='<div><div class="font-medium">'+ghc(t.amount)+'</div><div class="text-xs text-slate-400">'+shortId(t.id||t.transaction_id)+' · '+(t.type||'')+'</div></div>';
+      html+='<span class="status-badge '+(t.type==='credit'?'bg-emerald-100 text-emerald-700':'bg-rose-100 text-rose-700')+'">'+(t.type||'')+'</span>';
+      html+='</div>';
+    });
+    html+='</div>';
+  } else html+='<p class="text-sm text-slate-400 text-center py-4">No transactions yet</p>';
+  html+='</div>';
+
+  // Companies tab
+  html+='<div id="fin-companies" class="hidden">';
+  if(d.companies_summary&&d.companies_summary.length){
+    html+='<div class="mb-3 p-3 bg-violet-50 rounded-lg text-center"><span class="text-sm font-semibold text-violet-700">Total riders on platform: '+(d.total_rider_count||0)+'</span></div>';
+    html+='<div class="space-y-2">';
+    d.companies_summary.forEach(c=>{
+      const active=c.is_active&&!c.is_suspended&&!c.is_banned;
+      html+='<div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg text-sm">';
+      html+='<div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-sm">'+(c.username||'C')[0].toUpperCase()+'</div>';
+      html+='<div><div class="font-medium">'+(c.username||'\u2014')+'</div><div class="text-xs text-slate-400">'+(c.email||'')+'</div></div></div>';
+      html+='<span class="status-badge '+(active?'bg-emerald-100 text-emerald-700':c.is_banned?'bg-rose-100 text-rose-700':'bg-amber-100 text-amber-700')+'">'+(c.is_banned?'banned':c.is_suspended?'suspended':'active')+'</span>';
+      html+='</div>';
+    });
+    html+='</div>';
+  } else html+='<p class="text-sm text-slate-400 text-center py-4">No companies yet</p>';
+  html+='</div>';
+
+  document.getElementById('modalBody').innerHTML=html;
+}
+function showFinTab(tab,btn){
+  ['payouts','transactions','companies'].forEach(t=>{document.getElementById('fin-'+t).classList.toggle('hidden',t!==tab)});
+  btn.closest('.flex').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+async function retryPayout(pid){const r=await apiPost('/admin/payouts/'+pid+'/retry');if(r){toast('Retry initiated','success');showFinancialsModal()}}
+
+/* ═══════════════════════════════════
+   ── CANCELLED ORDERS MODAL ──
+   ═══════════════════════════════════ */
+async function showCancelledModal(){
+  openModal('❌ Cancelled Orders','<div class="text-center py-8 text-slate-400">Loading...</div>');
+  const d=await apiGet('/admin/cancelled');
+  if(!d){document.getElementById('modalBody').innerHTML='<p class="text-rose-500 text-center py-4">Failed to load</p>';return}
+
+  let html='';
+  html+='<div class="grid grid-cols-2 gap-3 mb-5">';
+  html+='<div class="bg-rose-50 rounded-lg p-3 text-center"><div class="text-xs text-rose-600 font-semibold">Total Cancelled</div><div class="text-2xl font-bold text-rose-700">'+(d.total||0)+'</div></div>';
+  html+='<div class="bg-amber-50 rounded-lg p-3 text-center"><div class="text-xs text-amber-600 font-semibold">Revenue Lost</div><div class="text-2xl font-bold text-amber-700">'+ghc(d.total_lost)+'</div></div>';
+  html+='</div>';
+
+  // Time breakdown
+  if(d.breakdown){
+    const rows=[{label:'Last 1 Hour',key:'1h',icon:'🕐'},{label:'Last 4 Hours',key:'4h',icon:'🕓'},{label:'Last 6 Hours',key:'6h',icon:'🕕'},{label:'Last 1 Day',key:'1d',icon:'📅'},{label:'Last 3 Days',key:'3d',icon:'📆'},{label:'This Month',key:'monthly',icon:'🗓️'},{label:'All Time',key:'total',icon:'📊'}];
+    html+='<div class="mb-4">';
+    html+=rows.map(r=>'<div class="breakdown-row"><div class="flex items-center gap-2"><span>'+r.icon+'</span><span class="text-sm font-medium text-slate-700">'+r.label+'</span></div><span class="text-lg font-bold text-rose-600">'+(d.breakdown[r.key]||0)+'</span></div>').join('');
+    html+='</div>';
+  }
+
+  // Recent cancelled
+  if(d.cancelled&&d.cancelled.length){
+    html+='<div class="text-sm font-semibold text-slate-700 mb-2">Recent Cancellations</div>';
+    html+='<div class="space-y-2 max-h-48 overflow-y-auto">';
+    d.cancelled.forEach(o=>{
+      html+='<div class="flex items-center justify-between p-3 bg-rose-50 rounded-lg text-sm">';
+      html+='<div><div class="font-mono text-xs text-slate-500">'+shortId(o.id)+'</div><div class="text-xs text-slate-600 truncate" style="max-width:250px">'+(o.pickup_address||'')+'→'+(o.dropoff_address||'')+'</div></div>';
+      html+='<div class="text-right"><div class="font-semibold text-rose-700">'+ghc(o.price_ghs)+'</div><div class="text-xs text-slate-400">'+timeAgo(o.created_at)+'</div></div>';
+      html+='</div>';
+    });
+    html+='</div>';
+  } else html+='<p class="text-sm text-slate-400 text-center py-4">No cancelled orders</p>';
+
+  document.getElementById('modalBody').innerHTML=html;
+}
+
+/* ═══════════════════════════════════
+   ── ORDER BREAKDOWNS ──
+   ═══════════════════════════════════ */
+async function showOrdersBreakdown(){
+  openModal('📦 Orders Breakdown','<div class="text-center py-4 text-slate-400">Loading...</div>');
+  const d=await apiGet('/admin/orders/breakdown');
+  if(!d){document.getElementById('modalBody').innerHTML='<p class="text-rose-500">Failed to load</p>';return}
+  const rows=[{label:'Last 1 Hour',key:'1h',icon:'🕐'},{label:'Last 4 Hours',key:'4h',icon:'🕓'},{label:'Last 6 Hours',key:'6h',icon:'🕕'},{label:'Last 1 Day',key:'1d',icon:'📅'},{label:'Last 3 Days',key:'3d',icon:'📆'},{label:'This Month',key:'monthly',icon:'🗓️'},{label:'All Time',key:'total',icon:'📊'}];
+  document.getElementById('modalBody').innerHTML=rows.map(r=>'<div class="breakdown-row"><div class="flex items-center gap-2"><span>'+r.icon+'</span><span class="text-sm font-medium text-slate-700">'+r.label+'</span></div><span class="text-lg font-bold text-slate-900">'+(d[r.key]||0)+'</span></div>').join('')
+}
+async function showDeliveredBreakdown(){
+  openModal('✅ Delivered Breakdown','<div class="text-center py-4 text-slate-400">Loading...</div>');
+  const d=await apiGet('/admin/delivered/breakdown');
+  if(!d){document.getElementById('modalBody').innerHTML='<p class="text-rose-500">Failed to load</p>';return}
+  const rows=[{label:'Last 1 Hour',key:'1h',icon:'🕐'},{label:'Last 4 Hours',key:'4h',icon:'🕓'},{label:'Last 6 Hours',key:'6h',icon:'🕕'},{label:'Last 1 Day',key:'1d',icon:'📅'},{label:'Last 3 Days',key:'3d',icon:'📆'},{label:'This Month',key:'monthly',icon:'🗓️'},{label:'All Time',key:'total',icon:'📊'}];
+  document.getElementById('modalBody').innerHTML=rows.map(r=>'<div class="breakdown-row"><div class="flex items-center gap-2"><span>'+r.icon+'</span><span class="text-sm font-medium text-slate-700">'+r.label+'</span></div><span class="text-lg font-bold text-emerald-600">'+(d[r.key]||0)+'</span></div>').join('')
+}
+async function showRevenueBreakdown(){
+  openModal('💰 Revenue Breakdown','<div class="text-center py-4 text-slate-400">Loading...</div>');
+  const d=await apiGet('/admin/revenue/breakdown');
+  if(!d){document.getElementById('modalBody').innerHTML='<p class="text-rose-500">Failed to load</p>';return}
+  const rows=[{label:'Last 1 Hour',key:'1h',icon:'🕐'},{label:'Last 4 Hours',key:'4h',icon:'🕓'},{label:'Last 6 Hours',key:'6h',icon:'🕕'},{label:'Last 1 Day',key:'1d',icon:'📅'},{label:'Last 3 Days',key:'3d',icon:'📆'},{label:'This Month',key:'monthly',icon:'🗓️'},{label:'All Time',key:'total',icon:'📊'}];
+  document.getElementById('modalBody').innerHTML=rows.map(r=>'<div class="breakdown-row"><div class="flex items-center gap-2"><span>'+r.icon+'</span><span class="text-sm font-medium text-slate-700">'+r.label+'</span></div><span class="text-lg font-bold text-amber-600">'+ghc(d[r.key])+'</span></div>').join('')
+}
+
+/* ═══════════════════════════════════
+   ── ENROLLMENT FLOW ──
+   ═══════════════════════════════════ */
+function openEnrollModal(){
+  document.getElementById('enrollTitle').textContent='Enroll New Partner';
+  document.getElementById('enrollBody').innerHTML=`
+    <p class="text-sm text-slate-500 mb-5">Who are you enrolling?</p>
+    <div class="grid grid-cols-2 gap-4">
+      <div class="enroll-option" onclick="showCompanyForm()">
+        <div class="text-4xl mb-3">🏢</div>
+        <div class="font-semibold text-slate-800">Rider Company</div>
+        <p class="text-xs text-slate-500 mt-1">Fleet partner for deliveries</p>
+      </div>
+      <div class="enroll-option" onclick="showMerchantForm()">
+        <div class="text-4xl mb-3">🏪</div>
+        <div class="font-semibold text-slate-800">Merchant</div>
+        <p class="text-xs text-slate-500 mt-1">Business needing delivery</p>
+      </div>
+    </div>`;
+  document.getElementById('enrollOverlay').classList.add('active');
+}
+function closeEnroll(){document.getElementById('enrollOverlay').classList.remove('active')}
+
+function showCompanyForm(){
+  document.getElementById('enrollTitle').textContent='🏢 Enroll Rider Company';
+  document.getElementById('enrollBody').innerHTML=`
+    <form id="companyForm" class="space-y-3" onsubmit="submitCompany(event)">
+      <div><label class="form-label">Company Name *</label><input name="company_name" class="form-input" required placeholder="e.g. Swift Riders Ghana"></div>
+      <div><label class="form-label">Person in Charge *</label><input name="contact_person" class="form-input" required placeholder="Full name"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="form-label">Phone *</label><input name="phone" class="form-input" required placeholder="+233..."></div>
+        <div><label class="form-label">Email *</label><input name="email" type="email" class="form-input" required placeholder="email@example.com"></div>
+      </div>
+      <div><label class="form-label">Address</label><input name="address" class="form-input" placeholder="Physical address"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="form-label">Number of Bikes</label><input name="num_bikes" type="number" class="form-input" min="0" placeholder="0"></div>
+        <div><label class="form-label">Coverage Location</label><input name="coverage_location" class="form-input" placeholder="e.g. Accra, Tema"></div>
+      </div>
+      <div class="flex gap-3 pt-3">
+        <button type="button" onclick="openEnrollModal()" class="flex-1 px-4 py-2.5 border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50 transition">← Back</button>
+        <button type="submit" id="companySubmitBtn" class="flex-1 px-4 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition">Create Account</button>
+      </div>
+    </form>`;
+}
+function showMerchantForm(){
+  document.getElementById('enrollTitle').textContent='🏪 Enroll Merchant';
+  document.getElementById('enrollBody').innerHTML=`
+    <form id="merchantForm" class="space-y-3" onsubmit="submitMerchant(event)">
+      <div><label class="form-label">Business Name *</label><input name="business_name" class="form-input" required placeholder="e.g. Kwame's Kitchen"></div>
+      <div><label class="form-label">Owner / Manager *</label><input name="owner_name" class="form-input" required placeholder="Full name"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="form-label">Phone *</label><input name="phone" class="form-input" required placeholder="+233..."></div>
+        <div><label class="form-label">Email *</label><input name="email" type="email" class="form-input" required placeholder="email@example.com"></div>
+      </div>
+      <div><label class="form-label">Business Address</label><input name="address" class="form-input" placeholder="Store / warehouse location"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="form-label">Business Type</label>
+          <select name="business_type" class="form-input"><option value="">Select type</option><option value="Restaurant">Restaurant</option><option value="Retail">Retail</option><option value="Grocery">Grocery</option><option value="E-commerce">E-commerce</option><option value="Pharmacy">Pharmacy</option><option value="Other">Other</option></select>
+        </div>
+        <div><label class="form-label">Avg Daily Orders</label><input name="avg_daily_orders" type="number" class="form-input" min="0" placeholder="0"></div>
+      </div>
+      <div class="flex gap-3 pt-3">
+        <button type="button" onclick="openEnrollModal()" class="flex-1 px-4 py-2.5 border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50 transition">← Back</button>
+        <button type="submit" id="merchantSubmitBtn" class="flex-1 px-4 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition">Create Account</button>
+      </div>
+    </form>`;
+}
+async function submitCompany(e){
+  e.preventDefault();const f=new FormData(e.target);const btn=document.getElementById('companySubmitBtn');btn.disabled=true;btn.textContent='Creating...';
+  const body={company_name:f.get('company_name'),contact_person:f.get('contact_person'),phone:f.get('phone'),email:f.get('email'),address:f.get('address')||'',num_bikes:parseInt(f.get('num_bikes'))||0,coverage_location:f.get('coverage_location')||''};
+  try{const r=await fetch('/api/admin/enroll/company',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();
+  if(!r.ok){toast(d.detail||'Failed','error');btn.disabled=false;btn.textContent='Create Account';return}
+  showCredentials('🏢 Rider Company Created!',d.company_name||body.company_name,d.username,d.password,'company_admin');toast('Company enrolled!','success');fetchSummary();fetchPartners()}catch(err){toast('Network error','error');btn.disabled=false;btn.textContent='Create Account'}
+}
+async function submitMerchant(e){
+  e.preventDefault();const f=new FormData(e.target);const btn=document.getElementById('merchantSubmitBtn');btn.disabled=true;btn.textContent='Creating...';
+  const body={business_name:f.get('business_name'),owner_name:f.get('owner_name'),phone:f.get('phone'),email:f.get('email'),address:f.get('address')||'',business_type:f.get('business_type')||'',avg_daily_orders:parseInt(f.get('avg_daily_orders'))||0};
+  try{const r=await fetch('/api/admin/enroll/merchant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();
+  if(!r.ok){toast(d.detail||'Failed','error');btn.disabled=false;btn.textContent='Create Account';return}
+  showCredentials('🏪 Merchant Created!',d.business_name||body.business_name,d.username,d.password,'merchant');toast('Merchant enrolled!','success');fetchSummary();fetchPartners()}catch(err){toast('Network error','error');btn.disabled=false;btn.textContent='Create Account'}
+}
+function showCredentials(title,name,username,password,role){
+  document.getElementById('enrollTitle').textContent=title;
+  document.getElementById('enrollBody').innerHTML=`
+    <div class="text-center mb-4"><div class="text-5xl mb-3">✅</div><p class="text-sm text-slate-600"><strong>${name}</strong> has been enrolled as a <span class="capitalize">${role.replace('_',' ')}</span></p></div>
+    <div class="cred-box mb-4"><div class="text-xs text-emerald-700 font-semibold mb-2 uppercase tracking-wider">Login Credentials</div>
+      <div class="flex items-center justify-between mb-2"><span class="text-slate-600">Username:</span><span class="font-bold text-slate-900">${username}</span></div>
+      <div class="flex items-center justify-between"><span class="text-slate-600">Password:</span><span class="font-bold text-slate-900">${password}</span></div></div>
+    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4"><p class="text-xs text-amber-800">⚠️ <strong>Save these credentials!</strong> The password cannot be retrieved after closing.</p></div>
+    <div class="flex gap-3"><button onclick="copyCredentials('${username}','${password}')" class="flex-1 px-4 py-2.5 border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50 transition">📋 Copy</button><button onclick="closeEnroll()" class="flex-1 px-4 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition">Done</button></div>`;
+}
+function copyCredentials(u,p){navigator.clipboard.writeText('Username: '+u+'\nPassword: '+p).then(()=>toast('Copied!','success')).catch(()=>toast('Copy failed','error'))}
+
+/* ═══════════════════════════════════
+   ── DATA FETCH ──
+   ═══════════════════════════════════ */
+async function fetchSummary(){
+  const el=document.getElementById('statsSection');
+  const data=await apiGet('/admin/summary');
+  if(!data){el.innerHTML='<div class="col-span-full text-center py-8"><p class="text-slate-500 mb-3">Sign in to view platform statistics</p><a href="/static/login.html" class="text-brand-600 font-medium hover:underline">→ Sign in</a></div>';return}
+  const stats=[
+    {label:'Total Orders',value:data.total_orders||0,icon:'📦',bg:'bg-blue-50 border-blue-200',click:'showOrdersBreakdown()'},
+    {label:'Delivered',value:data.delivered_orders||0,icon:'✅',bg:'bg-emerald-50 border-emerald-200',click:'showDeliveredBreakdown()'},
+    {label:'Cancelled',value:data.cancelled_orders||0,icon:'❌',bg:'bg-rose-50 border-rose-200',click:'showCancelledModal()'},
+    {label:'Revenue',value:ghc(data.total_revenue),icon:'💰',bg:'bg-amber-50 border-amber-200',click:'showFinancialsModal()'},
+    {label:'Merchants',value:data.total_merchants||0,icon:'🏪',bg:'bg-sky-50 border-sky-200',click:'showMerchantsList()'},
+    {label:'Rider Companies',value:(data.total_companies||0)+' ('+(data.total_riders||0)+' riders)',icon:'🏢',bg:'bg-teal-50 border-teal-200',click:'showCompaniesList()'},
+  ];
+  el.innerHTML=stats.map(s=>'<div class="stat-card '+s.bg+' rounded-xl border p-4" onclick="'+s.click+'"><div class="flex items-center justify-between mb-2"><span class="text-xl">'+s.icon+'</span><span class="text-xs text-slate-400">Click for details</span></div><div class="text-2xl font-bold text-slate-900">'+s.value+'</div><div class="text-xs text-slate-500 mt-1">'+s.label+'</div></div>').join('');
+}
+
+async function fetchOrders(){
+  const data=await apiGet('/admin/orders');const tbody=document.getElementById('ordersBody'),sub=document.getElementById('ordersSubtitle');
+  if(!data||!data.orders){tbody.innerHTML='<tr><td colspan="5" class="px-5 py-8 text-center text-slate-400">Sign in to view</td></tr>';sub.textContent='';return}
+  const orders=data.orders;sub.textContent=orders.length+' total · '+data.delivered+' delivered · '+ghc(data.revenue);
+  if(!orders.length){tbody.innerHTML='<tr><td colspan="5" class="px-5 py-8 text-center text-slate-400">No orders yet</td></tr>';return}
+  tbody.innerHTML=orders.slice(0,15).map(o=>'<tr class="table-row"><td class="px-5 py-3 font-mono text-xs text-slate-600">'+shortId(o.id)+'</td><td class="px-5 py-3"><div class="text-xs font-medium text-slate-800 truncate max-w-[200px]">'+(o.pickup_address||'\u2014')+'</div><div class="text-xs text-slate-400 truncate max-w-[200px]">→ '+(o.dropoff_address||'\u2014')+'</div></td><td class="px-5 py-3 text-right font-medium">'+ghc(o.price_ghs)+'</td><td class="px-5 py-3 text-center">'+statusBadge(o.status)+'</td><td class="px-5 py-3 text-xs text-slate-500">'+timeAgo(o.created_at)+'</td></tr>').join('')
+}
+
+/* Partners table: only companies & merchants (NO individual riders) */
+async function fetchPartners(){
+  const data=await apiGet('/admin/users');const tbody=document.getElementById('partnersBody'),sub=document.getElementById('partnersSubtitle');
+  if(!data||!data.users){tbody.innerHTML='<tr><td colspan="4" class="px-5 py-8 text-center text-slate-400">Sign in to view</td></tr>';return}
+  // Filter: only show company_admin and merchant — NO riders
+  const partners=data.users.filter(u=>u.role==='company_admin'||u.role==='COMPANY_ADMIN'||u.role==='merchant'||u.role==='MERCHANT');
+  const riderCount=data.users.filter(u=>u.role==='rider'||u.role==='RIDER').length;
+  sub.textContent=partners.length+' partners · '+riderCount+' total riders (managed by companies)';
+  if(!partners.length){tbody.innerHTML='<tr><td colspan="4" class="px-5 py-8 text-center text-slate-400">No partners yet</td></tr>';return}
+  tbody.innerHTML=partners.map(u=>{
+    const isRider=false; // never riders here
+    const suspended=u.is_suspended;
+    const banned=u.is_banned;
+    const statusClass=banned?'bg-rose-100 text-rose-700':suspended?'bg-amber-100 text-amber-700':'bg-emerald-100 text-emerald-700';
+    const statusText=banned?'banned':suspended?'suspended':'active';
+    return '<tr class="table-row"><td class="px-5 py-3 font-medium text-slate-800">'+u.username+'</td><td class="px-5 py-3 text-center">'+roleBadge(u.role)+'</td><td class="px-5 py-3 text-center"><span class="status-badge '+statusClass+'">'+statusText+'</span></td><td class="px-5 py-3 text-center"><div class="flex items-center justify-center gap-1">'+(banned?'<button onclick="reactivateUser(\''+u.id+'\')" class="text-xs px-2 py-1 border border-emerald-300 text-emerald-700 rounded hover:bg-emerald-50">Reactivate</button>':suspended?'<button onclick="reactivateUser(\''+u.id+'\')" class="text-xs px-2 py-1 border border-emerald-300 text-emerald-700 rounded hover:bg-emerald-50">Reactivate</button>':'<button onclick="suspendUser(\''+u.id+'\')" class="text-xs px-2 py-1 border border-amber-300 text-amber-700 rounded hover:bg-amber-50">Suspend</button><button onclick="banUser(\''+u.id+'\')" class="text-xs px-2 py-1 border border-rose-300 text-rose-700 rounded hover:bg-rose-50">Ban</button>')+'</div></td></tr>'
+  }).join('')
+}
+
+async function suspendUser(uid){if(!confirm('Suspend this company/merchant?'))return;const r=await apiPost('/users/'+uid+'/suspend');if(r){toast('Suspended','success');fetchPartners()}else toast('Failed — only companies and merchants can be suspended by superadmin','error')}
+async function banUser(uid){if(!confirm('Ban this company/merchant? This will prevent login.'))return;const r=await apiPost('/users/'+uid+'/ban');if(r){toast('Banned','success');fetchPartners()}else toast('Failed — only companies and merchants can be banned by superadmin','error')}
+async function reactivateUser(uid){if(!confirm('Reactivate this account?'))return;
+  let r=await apiPost('/users/'+uid+'/unsuspend');
+  if(r){toast('Reactivated','success');fetchPartners()}else toast('Failed','error')
+}
+
+/* Merchants / Companies list modals */
+async function showMerchantsList(){
+  openModal('🏪 All Merchants','<div class="text-center py-4 text-slate-400">Loading...</div>');
+  const d=await apiGet('/admin/users');
+  if(!d||!d.users){document.getElementById('modalBody').innerHTML='<p class="text-slate-400">No data</p>';return}
+  const merchants=d.users.filter(u=>u.role==='merchant'||u.role==='MERCHANT');
+  if(!merchants.length){document.getElementById('modalBody').innerHTML='<p class="text-slate-400">No merchants found</p>';return}
+  document.getElementById('modalBody').innerHTML='<div class="space-y-2">'+merchants.map(m=>'<div class="flex items-center gap-3 p-3 rounded-lg border border-slate-100"><div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">'+(m.username||'M')[0].toUpperCase()+'</div><div class="flex-1 min-w-0"><div class="font-medium text-sm">'+(m.username||'\u2014')+'</div><div class="text-xs text-slate-400">'+(m.email||'')+'</div></div><span class="status-badge '+(m.is_active&&!m.is_banned&&!m.is_suspended?'bg-emerald-100 text-emerald-700':'bg-rose-100 text-rose-700')+'">'+(m.is_banned?'banned':m.is_suspended?'suspended':'active')+'</span></div>').join('')+'</div>';
+}
+async function showCompaniesList(){
+  openModal('🏢 Rider Companies','<div class="text-center py-4 text-slate-400">Loading...</div>');
+  const d=await apiGet('/admin/users');
+  if(!d||!d.users){document.getElementById('modalBody').innerHTML='<p class="text-slate-400">No data</p>';return}
+  const companies=d.users.filter(u=>u.role==='company_admin'||u.role==='COMPANY_ADMIN');
+  const riderCount=d.users.filter(u=>u.role==='rider'||u.role==='RIDER').length;
+  if(!companies.length){document.getElementById('modalBody').innerHTML='<p class="text-slate-400">No rider companies found</p>';return}
+  let html='<div class="mb-3 p-3 bg-violet-50 rounded-lg text-center"><span class="text-sm font-semibold text-violet-700">Total riders on platform: '+riderCount+'</span></div>';
+  html+='<div class="space-y-2">'+companies.map(c=>'<div class="flex items-center gap-3 p-3 rounded-lg border border-slate-100"><div class="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-sm">'+(c.username||'C')[0].toUpperCase()+'</div><div class="flex-1 min-w-0"><div class="font-medium text-sm">'+(c.username||'\u2014')+'</div><div class="text-xs text-slate-400">'+(c.email||'')+'</div></div><span class="status-badge '+(c.is_active&&!c.is_banned&&!c.is_suspended?'bg-emerald-100 text-emerald-700':'bg-rose-100 text-rose-700')+'">'+(c.is_banned?'banned':c.is_suspended?'suspended':'active')+'</span></div>').join('')+'</div>';
+  document.getElementById('modalBody').innerHTML=html;
+}
+
+/* Pending sections */
+async function fetchMerchants(){const data=await apiGet('/merchants/pending');const tbody=document.getElementById('merchantsBody'),sec=document.getElementById('pendingMerchantsSection');if(!data)return;const m=data.pending||[];if(!m.length){sec.classList.add('hidden');return}sec.classList.remove('hidden');tbody.innerHTML=m.map(x=>'<tr class="table-row"><td class="px-5 py-3"><input type="checkbox" class="merchant-cb w-4 h-4 rounded" data-id="'+x.id+'"/></td><td class="px-5 py-3 font-medium">'+(x.username||'\u2014')+'</td><td class="px-5 py-3 text-sm text-slate-600">'+(x.store_name||x.store_address||'\u2014')+'</td><td class="px-5 py-3 text-sm text-slate-500">'+(x.momo_number||x.phone||'\u2014')+'</td><td class="px-5 py-3 text-center"><button onclick="approveMerchant(\''+x.id+'\')" class="text-xs px-2.5 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700">Approve</button></td></tr>').join('')}
+async function approveMerchant(id){const r=await apiPost('/merchants/'+id+'/approve');if(r){toast('Approved','success');fetchMerchants()}else toast('Failed','error')}
+async function batchApproveMerchants(){const ids=[...document.querySelectorAll('.merchant-cb:checked')].map(i=>i.dataset.id);if(!ids.length){toast('Select merchants','error');return}await apiPost('/merchants/batch_approve',{merchant_ids:ids});toast(ids.length+' approved','success');fetchMerchants()}
+function showPendingMerchants(){document.getElementById('pendingMerchantsSection').classList.remove('hidden');document.getElementById('pendingMerchantsSection').scrollIntoView({behavior:'smooth'});closeFab();fetchMerchants()}
+document.getElementById('selectAllMerchants').onchange=function(){document.querySelectorAll('.merchant-cb').forEach(cb=>cb.checked=this.checked)};
+
+async function fetchCompanies(){const data=await apiGet('/companies/pending');const tbody=document.getElementById('companiesBody'),sec=document.getElementById('pendingCompaniesSection');if(!data)return;const c=data.pending||[];if(!c.length){sec.classList.add('hidden');return}sec.classList.remove('hidden');tbody.innerHTML=c.map(x=>'<tr class="table-row"><td class="px-5 py-3"><input type="checkbox" class="company-cb w-4 h-4 rounded" data-id="'+x.id+'"/></td><td class="px-5 py-3 font-medium">'+(x.name||'\u2014')+'</td><td class="px-5 py-3 text-sm text-slate-600">'+(x.contact||x.contact_person||'\u2014')+'</td><td class="px-5 py-3 text-sm text-slate-500">'+(x.contact_phone||'\u2014')+'</td><td class="px-5 py-3 text-center"><button onclick="approveCompany(\''+x.id+'\')" class="text-xs px-2.5 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700">Approve</button></td></tr>').join('')}
+async function approveCompany(id){const r=await apiPost('/companies/'+id+'/approve');if(r){toast('Approved','success');fetchCompanies()}else toast('Failed','error')}
+async function batchApproveCompanies(){const ids=[...document.querySelectorAll('.company-cb:checked')].map(i=>i.dataset.id);if(!ids.length){toast('Select companies','error');return}await apiPost('/companies/batch_approve',{company_ids:ids});toast(ids.length+' approved','success');fetchCompanies()}
+function showPendingCompanies(){document.getElementById('pendingCompaniesSection').classList.remove('hidden');document.getElementById('pendingCompaniesSection').scrollIntoView({behavior:'smooth'});closeFab();fetchCompanies()}
+document.getElementById('selectAllCompanies').onchange=function(){document.querySelectorAll('.company-cb').forEach(cb=>cb.checked=this.checked)};
+
+async function fetchActivity(){
+  const el=document.getElementById('activityFeed');
+  try{const r=await fetch('/api/admin/audit_log');if(!r.ok)throw 0;const j=await r.json();const log=j.log||[];
+  if(!log.length){el.innerHTML='<div class="text-sm text-slate-400 text-center py-4">No recent activity</div>';return}
+  el.innerHTML=log.map(e=>'<div class="flex items-start gap-3 p-2 rounded-lg hover:bg-slate-50 transition"><div class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-xs flex-shrink-0">'+(e.action.includes('Approved')?'✅':e.action.includes('Banned')?'🚫':'📝')+'</div><div class="min-w-0"><div class="text-sm text-slate-700"><span class="font-medium">'+e.user+'</span> '+e.action.toLowerCase()+'</div><div class="text-xs text-slate-400">'+e.target+' · '+new Date(e.ts*1000).toLocaleTimeString()+'</div></div></div>').join('')
+  }catch(e){el.innerHTML='<div class="text-sm text-rose-500 text-center py-4">Failed to load</div>'}
+}
+async function fetchAuditLog(){
+  const el=document.getElementById('auditLog');
+  try{const r=await fetch('/api/admin/audit_log');if(!r.ok)throw 0;const j=await r.json();const log=j.log||[];
+  if(!log.length){el.innerHTML='<div class="text-sm text-slate-400 text-center py-4">No entries</div>';return}
+  el.innerHTML='<table class="w-full text-sm"><thead><tr class="text-xs text-slate-500 uppercase tracking-wider"><th class="py-2 text-left font-medium">Time</th><th class="py-2 text-left font-medium">User</th><th class="py-2 text-left font-medium">Action</th></tr></thead><tbody class="divide-y divide-slate-100">'+log.map(e=>'<tr class="table-row"><td class="py-2.5 text-xs text-slate-500">'+new Date(e.ts*1000).toLocaleString()+'</td><td class="py-2.5 font-medium">'+e.user+'</td><td class="py-2.5">'+e.action+'</td></tr>').join('')+'</tbody></table>'
+  }catch(e){el.innerHTML='<div class="text-sm text-rose-500 text-center py-4">Failed to load</div>'}
+}
+function exportData(){toast('Preparing export...','info');fetch('/api/reconciliation/export').then(r=>r.blob()).then(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='export_'+Date.now()+'.csv';a.click();toast('Export downloaded','success')}).catch(()=>toast('Export failed','error'))}
+
+/* ── Init ── */
+async function init(){await fetchSummary();await Promise.allSettled([fetchOrders(),fetchPartners(),fetchMerchants(),fetchCompanies(),fetchActivity(),fetchAuditLog()])}
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+nohup: ignoring input
+INFO:     Started server process [18135]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8600 (Press CTRL+C to quit)
+INFO:     127.0.0.1:45092 - "POST /users/register HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45108 - "POST /users/register HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45124 - "POST /otp/request HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45136 - "POST /users/register HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:37866 - "POST /users/register HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:37880 - "POST /otp/request HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60784 - "POST /otp/verify HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57714 - "POST /otp/request HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57718 - "POST /otp/request HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57726 - "POST /otp/verify HTTP/1.1" 200 OK

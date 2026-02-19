@@ -1,0 +1,8 @@
+nohup: ignoring input
+INFO:     Started server process [18716]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8300 (Press CTRL+C to quit)
+INFO:     127.0.0.1:42098 - "POST /tracking/update/f93ac38c-3a9d-4442-9342-60cffe1a04ab HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60266 - "POST /tracking/update/f93ac38c-3a9d-4442-9342-60cffe1a04ab HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60274 - "GET /tracking/public/f93ac38c-3a9d-4442-9342-60cffe1a04ab HTTP/1.1" 404 Not Found

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Anomaah Delivery</string>
+    <string name="brand_name">ANOMAAH</string>
+    <string name="brand_full">ANOMAAH DELIVERY SYSTEM</string>
+    <string name="brand_tagline">Reliable. Fast. Trusted.</string>
+
+    <!-- Auth -->
+    <string name="login_title">Welcome Back</string>
+    <string name="login_subtitle">Sign in with your phone and passcode</string>
+    <string name="phone_label">Phone Number</string>
+    <string name="phone_hint">+233 XX XXX XXXX</string>
+    <string name="passcode_label">5-Digit Passcode</string>
+    <string name="passcode_hint">Enter 5-digit code</string>
+    <string name="btn_login">SIGN IN</string>
+    <string name="login_help">Your company admin provides your passcode</string>
+    <string name="login_error_phone">Enter a valid phone number</string>
+    <string name="login_error_passcode">Enter your 5-digit passcode</string>
+    <string name="login_error_invalid">Invalid phone or passcode</string>
+    <string name="login_loading">Signing in…</string>
+
+    <!-- Navigation -->
+    <string name="nav_orders">Orders</string>
+    <string name="nav_tracking">Tracking</string>
+    <string name="nav_earnings">Earnings</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Orders -->
+    <string name="orders_title">My Orders</string>
+    <string name="orders_empty">No orders yet</string>
+    <string name="orders_empty_desc">New orders will appear here when assigned</string>
+    <string name="order_detail_title">Order Details</string>
+    <string name="pickup_label">📍 Pickup</string>
+    <string name="dropoff_label">📍 Drop-off</string>
+    <string name="btn_accept">Accept Order</string>
+    <string name="btn_picked_up">Mark Picked Up</string>
+    <string name="btn_in_transit">Start Delivery</string>
+    <string name="btn_delivered">Mark Delivered</string>
+    <string name="btn_cancel_order">Cancel Order</string>
+    <string name="cancel_reason_hint">Reason for cancellation</string>
+
+    <!-- Tracking -->
+    <string name="tracking_title">Live Tracking</string>
+    <string name="tracking_no_order">No active delivery</string>
+    <string name="tracking_distance">Distance remaining</string>
+    <string name="tracking_eta">ETA</string>
+
+    <!-- Earnings -->
+    <string name="earnings_title">Earnings</string>
+    <string name="total_earnings">Total Earnings</string>
+    <string name="available_balance">Available</string>
+    <string name="pending_payout">Pending</string>
+    <string name="btn_request_payout">Request Payout</string>
+    <string name="payout_history">Payout History</string>
+    <string name="currency_symbol">GH₵</string>
+
+    <!-- Profile -->
+    <string name="profile_title">My Profile</string>
+    <string name="online_status">Online</string>
+    <string name="offline_status">Offline</string>
+    <string name="company_label">Company</string>
+    <string name="rating_label">Rating</string>
+    <string name="deliveries_label">Deliveries</string>
+    <string name="bike_label">Bike</string>
+    <string name="btn_change_passcode">Change Passcode</string>
+    <string name="btn_logout">Sign Out</string>
+    <string name="logout_confirm">Are you sure you want to sign out?</string>
+    <string name="change_passcode_title">Change Passcode</string>
+    <string name="new_passcode_hint">Enter new 5-digit passcode</string>
+    <string name="confirm_passcode_hint">Confirm new passcode</string>
+    <string name="passcode_changed">Passcode updated successfully</string>
+    <string name="passcode_mismatch">Passcodes don\'t match</string>
+    <string name="passcode_invalid">Passcode must be exactly 5 digits</string>
+
+    <!-- Messages -->
+    <string name="messages_title">Company Messages</string>
+    <string name="no_messages">No messages yet</string>
+
+    <!-- General -->
+    <string name="loading">Loading…</string>
+    <string name="retry">Retry</string>
+    <string name="error_network">Network error. Check your connection.</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+
+    <!-- Period Selector -->
+    <string-array name="period_array">
+        <item>Daily</item>
+        <item>Weekly</item>
+        <item>Monthly</item>
+        <item>Yearly</item>
+    </string-array>
+</resources>

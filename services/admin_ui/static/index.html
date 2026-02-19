@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Admin UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @media (max-width: 640px) { html { font-size: 14px; } }
+      body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+      input, select, button { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+      input, select { border-radius: 6px; font-size: 16px; }
+      button { min-height: 44px; min-width: 44px; }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-800 min-h-screen">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+      <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-wide">ANOMAAH Admin</h1>
+        <nav class="flex flex-wrap gap-2 sm:gap-4 w-full sm:w-auto">
+          <a class="text-sky-600 hover:text-sky-700 px-3 py-2 rounded hover:bg-sky-50 transition" href="/superadmin">Superadmin</a>
+          <a class="text-sky-600 hover:text-sky-700 px-3 py-2 rounded hover:bg-sky-50 transition" href="/company">Company</a>
+          <a class="text-sky-600 hover:text-sky-700 px-3 py-2 rounded hover:bg-sky-50 transition" href="/merchant">Merchant</a>
+        </nav>
+      </header>
+
+      <section class="bg-white shadow rounded-lg p-4 sm:p-6">
+        <h2 class="text-lg sm:text-xl font-medium mb-4">Configuration</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <label class="block">
+            <div class="text-sm text-slate-600 font-medium mb-1">Auth Service URL</div>
+            <input id="authUrl" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500" value="http://localhost:8100" />
+          </label>
+          <label class="block">
+            <div class="text-sm text-slate-600 font-medium mb-1">Order Service URL</div>
+            <input id="orderUrl" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500" value="http://localhost:8500" />
+          </label>
+          <label class="block">
+            <div class="text-sm text-slate-600 font-medium mb-1">Payment Service URL</div>
+            <input id="payUrl" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500" value="http://localhost:8200" />
+          </label>
+          <label class="block">
+            <div class="text-sm text-slate-600 font-medium mb-1">Superadmin Token</div>
+            <input id="token" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+          </label>
+        </div>
+        <div class="mt-6 flex flex-col sm:flex-row gap-3">
+          <button id="saveBtn" class="bg-sky-600 text-white px-6 py-3 rounded-lg hover:bg-sky-700 active:bg-sky-800 transition font-medium w-full sm:w-auto">Save Configuration</button>
+        </div>
+      </section>
+
+      <footer class="mt-6 text-xs sm:text-sm text-slate-500 text-center">Use the links above to open the relevant dashboard. Tokens are stored in your browser only.</footer>
+    </div>
+
+    <script>
+      const fields = ['authUrl','orderUrl','payUrl','token'];
+      fields.forEach(f=>{
+        const el = document.getElementById(f);
+        el.value = localStorage.getItem(f) || el.value || '';
+      });
+      document.getElementById('saveBtn').addEventListener('click', ()=>{
+        fields.forEach(f=> localStorage.setItem(f, document.getElementById(f).value));
+        alert('Saved configuration');
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ANOMAAH Rider App — Investor Preview</title>
+<style>
+  /* ─── Reset & Base ─────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%);
+    min-height: 100vh;
+    padding: 48px 24px;
+    color: #0F172A;
+  }
+
+  /* ─── Page Title ────────────────────────────────── */
+  .page-header {
+    text-align: center;
+    margin-bottom: 52px;
+  }
+  .page-header .badge {
+    display: inline-block;
+    background: linear-gradient(90deg, #F59E0B, #FBBF24);
+    color: #1a1a1a;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    padding: 5px 16px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+  .page-header h1 {
+    font-size: 40px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+  }
+  .page-header h1 span { color: #F59E0B; }
+  .page-header p {
+    color: #94A3B8;
+    font-size: 15px;
+  }
+
+  /* ─── Grid of Phones ───────────────────────────── */
+  .phones-grid {
+    display: flex;
+    justify-content: center;
+    gap: 28px;
+    flex-wrap: wrap;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+
+  /* ─── Phone Shell ───────────────────────────────── */
+  .phone-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .phone-label {
+    color: #CBD5E1;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .phone {
+    width: 280px;
+    height: 580px;
+    background: #0F172A;
+    border-radius: 44px;
+    padding: 10px;
+    box-shadow:
+      0 0 0 2px #334155,
+      0 30px 80px rgba(0,0,0,0.6),
+      inset 0 0 0 1px rgba(255,255,255,0.05);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .phone-notch {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 22px;
+    background: #0F172A;
+    border-radius: 999px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .phone-notch::before {
+    content: '';
+    width: 8px; height: 8px;
+    background: #1E293B;
+    border-radius: 50%;
+  }
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    background: #F8FAFC;
+    border-radius: 36px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* ─── Status Bar ───────────────────────────────── */
+  .status-bar {
+    background: #D97706;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    flex-shrink: 0;
+  }
+  .status-bar .time { color: #fff; font-size: 9px; font-weight: 700; }
+  .status-bar .icons { color: #fff; font-size: 9px; display: flex; gap: 4px; align-items: center; }
+  .status-bar .icons span { font-size: 8px; }
+
+  /* ─── Amber Header ──────────────────────────────── */
+  .header {
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    padding: 14px 16px 16px;
+    flex-shrink: 0;
+  }
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header h2 {
+    color: #fff;
+    font-size: 17px;
+    font-weight: 700;
+  }
+  .header .sub {
+    color: rgba(255,255,255,0.7);
+    font-size: 10px;
+    margin-top: 1px;
+  }
+  .online-pill {
+    background: rgba(255,255,255,0.22);
+    border: 1.5px solid rgba(255,255,255,0.5);
+    border-radius: 999px;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+  }
+  .online-pill .dot {
+    width: 7px;
+    height: 7px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.4);
+  }
+  .online-pill .pill-text {
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .offline-pill {
+    background: rgba(0,0,0,0.15);
+    border-color: rgba(255,255,255,0.2);
+  }
+  .offline-pill .dot { background: rgba(255,255,255,0.6); box-shadow: none; }
+
+  /* ─── Tab Bar ───────────────────────────────────── */
+  .tabs {
+    background: #fff;
+    display: flex;
+    border-bottom: 1px solid #E2E8F0;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px 6px;
+    font-size: 9.5px;
+    font-weight: 600;
+    color: #94A3B8;
+    border-bottom: 2.5px solid transparent;
+    cursor: pointer;
+  }
+  .tab.active {
+    color: #F59E0B;
+    border-bottom-color: #F59E0B;
+  }
+
+  /* ─── Scrollable Content ─────────────────────────── */
+  .content {
+    flex: 1;
+    overflow: hidden;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* ─── Order Card ────────────────────────────────── */
+  .order-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #E2E8F0;
+    padding: 11px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .order-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .order-id { font-size: 11px; font-weight: 700; color: #0F172A; }
+  .badge {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+  .badge-pending   { background: #FEF3C7; color: #B45309; }
+  .badge-assigned  { background: #DBEAFE; color: #1D4ED8; }
+  .badge-transit   { background: #E0E7FF; color: #4338CA; }
+  .badge-delivered { background: #D1FAE5; color: #047857; }
+  .badge-cancelled { background: #FEE2E2; color: #DC2626; }
+
+  .addr-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .addr-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    margin-top: 3px;
+    flex-shrink: 0;
+  }
+  .dot-green  { background: #10B981; }
+  .dot-red    { background: #EF4444; }
+  .addr-text  { font-size: 10px; color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 175px; }
+
+  .order-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    padding-top: 7px;
+    border-top: 1px solid #F1F5F9;
+  }
+  .order-price { font-size: 12px; font-weight: 700; color: #F59E0B; }
+  .order-dist  { font-size: 10px; color: #94A3B8; }
+
+  /* ─── Accept / Reject Buttons ───────────────────── */
+  .btn-row { display: flex; gap: 6px; margin-top: 8px; }
+  .btn-accept {
+    flex: 1; background: linear-gradient(135deg, #F59E0B, #D97706);
+    color: #fff; border: none; border-radius: 8px;
+    padding: 7px 0; font-size: 10px; font-weight: 700; cursor: pointer;
+  }
+  .btn-reject {
+    flex: 1; background: #F1F5F9;
+    color: #64748B; border: none; border-radius: 8px;
+    padding: 7px 0; font-size: 10px; font-weight: 700; cursor: pointer;
+  }
+
+  /* ─── Bottom Nav ────────────────────────────────── */
+  .bottom-nav {
+    background: #fff;
+    border-top: 1px solid #E2E8F0;
+    display: flex;
+    padding: 6px 0 10px;
+    flex-shrink: 0;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+  }
+  .nav-icon { font-size: 18px; line-height: 1; }
+  .nav-label { font-size: 8.5px; font-weight: 600; color: #94A3B8; }
+  .nav-item.active .nav-label { color: #F59E0B; }
+  .nav-item.active .nav-icon { filter: saturate(1); }
+
+  /* ─── Earnings Screen ───────────────────────────── */
+  .earnings-header {
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    padding: 14px 16px 20px;
+    flex-shrink: 0;
+  }
+  .earnings-big {
+    color: #fff;
+    font-size: 30px;
+    font-weight: 800;
+    margin: 6px 0 2px;
+    letter-spacing: -0.5px;
+  }
+  .earnings-sub { color: rgba(255,255,255,0.75); font-size: 10px; }
+
+  .stats-row {
+    display: flex;
+    gap: 8px;
+    padding: 10px 10px 0;
+    flex-shrink: 0;
+  }
+  .stat-card {
+    flex: 1;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #E2E8F0;
+    padding: 10px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .stat-val { font-size: 14px; font-weight: 700; }
+  .stat-label { font-size: 9px; color: #94A3B8; margin-top: 1px; }
+
+  .payout-btn {
+    margin: 10px 10px 0;
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+    color: #fff; border: none; border-radius: 10px;
+    padding: 10px; font-size: 11px; font-weight: 700;
+    text-align: center; cursor: pointer;
+    box-shadow: 0 4px 12px rgba(245,158,11,0.35);
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    padding: 10px 10px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+    flex-shrink: 0;
+  }
+
+  .payout-row {
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid #E2E8F0;
+    padding: 9px 11px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .payout-icon { font-size: 18px; }
+  .payout-info { flex: 1; }
+  .payout-date { font-size: 9px; color: #94A3B8; }
+  .payout-amount { font-size: 12px; font-weight: 700; color: #10B981; }
+  .payout-status-done { font-size: 9px; font-weight: 700; background: #D1FAE5; color: #047857; padding: 2px 7px; border-radius: 999px; }
+
+  /* ─── Tracking Screen ───────────────────────────── */
+  .map-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+  .map-bg {
+    width: 100%;
+    height: 100%;
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 28px, #E2E8F0 28px, #E2E8F0 29px),
+      repeating-linear-gradient(90deg, transparent, transparent 28px, #E2E8F0 28px, #E2E8F0 29px),
+      #EFF6FF;
+  }
+  .map-road-h {
+    position: absolute;
+    background: #CBD5E1;
+    height: 12px;
+    border-radius: 4px;
+  }
+  .map-road-v {
+    position: absolute;
+    background: #CBD5E1;
+    width: 12px;
+    border-radius: 4px;
+  }
+  .map-road-primary-h {
+    position: absolute;
+    background: #94A3B8;
+    height: 16px;
+    border-radius: 4px;
+  }
+  .map-route {
+    position: absolute;
+    background: #F59E0B;
+    height: 5px;
+    border-radius: 999px;
+    box-shadow: 0 0 0 2px rgba(245,158,11,0.25);
+  }
+  .map-pin {
+    position: absolute;
+    width: 26px; height: 26px;
+    border-radius: 50% 50% 50% 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+    transform: rotate(-45deg);
+  }
+  .map-pin span { transform: rotate(45deg); }
+  .pin-pickup { background: #10B981; transform: rotate(-45deg) translate(50%,-50%); top: 30%; left: 20%; }
+  .pin-dropoff { background: #EF4444; transform: rotate(-45deg) translate(50%,-50%); top: 55%; right: 18%; }
+  .pin-rider   { background: #F59E0B; transform: rotate(-45deg) translate(50%,-50%); top: 42%; left: 38%; }
+
+  .tracking-card {
+    position: absolute;
+    bottom: 10px;
+    left: 10px; right: 10px;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #E2E8F0;
+    padding: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  }
+  .tracking-card-header { font-size: 10px; font-weight: 700; color: #F59E0B; margin-bottom: 8px; }
+  .track-stats { display: flex; gap: 0; }
+  .track-stat { flex: 1; text-align: center; }
+  .track-stat:not(:last-child) { border-right: 1px solid #E2E8F0; }
+  .track-stat-val { font-size: 16px; font-weight: 800; color: #0F172A; }
+  .track-stat-lbl { font-size: 9px; color: #94A3B8; }
+  .track-stat-val.amber { color: #F59E0B; }
+  .update-btn {
+    margin-top: 10px;
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+    color: #fff; border: none; border-radius: 8px;
+    width: 100%; padding: 8px; font-size: 10.5px; font-weight: 700;
+    cursor: pointer; box-shadow: 0 3px 10px rgba(245,158,11,0.3);
+  }
+
+  /* ─── Profile Screen ─────────────────────────────── */
+  .profile-header {
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    padding: 16px 16px 20px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .avatar {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    border: 2.5px solid rgba(255,255,255,0.6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 800; color: #fff;
+    margin-bottom: 6px;
+  }
+  .profile-name { color: #fff; font-size: 16px; font-weight: 700; }
+  .profile-company { color: rgba(255,255,255,0.7); font-size: 10px; }
+
+  .profile-stats {
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+    flex-shrink: 0;
+  }
+  .p-stat-card {
+    flex: 1; background: #fff;
+    border-radius: 12px; border: 1px solid #E2E8F0;
+    padding: 9px 6px; text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .p-stat-val { font-size: 13px; font-weight: 700; }
+  .p-stat-lbl { font-size: 8.5px; color: #94A3B8; margin-top: 1px; }
+
+  .info-card {
+    margin: 0 10px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #E2E8F0;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .info-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .info-row:not(:last-child) { border-bottom: 1px solid #F1F5F9; }
+  .info-icon { font-size: 14px; width: 18px; text-align: center; }
+  .info-label { font-size: 10px; color: #94A3B8; flex: 1; }
+  .info-value { font-size: 10px; font-weight: 600; color: #0F172A; }
+
+  .action-card {
+    margin: 8px 10px 0;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #E2E8F0;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .action-row {
+    display: flex;
+    align-items: center;
+    padding: 11px 12px;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .action-row:not(:last-child) { border-bottom: 1px solid #F1F5F9; }
+  .action-row .action-icon { font-size: 14px; }
+  .action-row .action-text { font-size: 10.5px; font-weight: 600; color: #0F172A; flex: 1; }
+  .action-row .action-arrow { font-size: 10px; color: #94A3B8; }
+  .action-row.danger .action-text { color: #EF4444; }
+  .action-row.danger .action-icon { color: #EF4444; }
+
+  /* ─── Feature Callouts below phones ──────────────── */
+  .features-section {
+    max-width: 1300px;
+    margin: 52px auto 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    padding: 0 8px;
+  }
+  .feature-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .feature-card .fi { font-size: 28px; margin-bottom: 10px; }
+  .feature-card h3 { color: #F1F5F9; font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .feature-card p  { color: #64748B; font-size: 12px; line-height: 1.6; }
+
+  .footer-note {
+    text-align: center;
+    color: #475569;
+    font-size: 12px;
+    margin-top: 48px;
+    padding-bottom: 32px;
+  }
+  .footer-note strong { color: #F59E0B; }
+</style>
+</head>
+<body>
+
+<!-- ─── Page Header ──────────────────────────────────── -->
+<div class="page-header">
+  <div class="badge">🚀 Investor Preview — Feb 2026</div>
+  <h1><span>ANOMAAH</span> Rider App</h1>
+  <p>Android app for delivery riders — real-time orders, live tracking, earnings & profile management</p>
+</div>
+
+<!-- ─── Phone Screens ────────────────────────────────── -->
+<div class="phones-grid">
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN 1 — ORDERS DASHBOARD
+  ══════════════════════════════════════════════════ -->
+  <div class="phone-wrapper">
+    <div class="phone-label">📦 Orders</div>
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <div class="icons"><span>●●●●</span><span>WiFi</span><span>🔋</span></div>
+        </div>
+
+        <!-- Amber Header -->
+        <div class="header">
+          <div class="header-row">
+            <div>
+              <div class="header" style="background:none;padding:0;"><h2 style="font-size:17px;">My Orders</h2></div>
+              <div class="sub">3 active orders</div>
+            </div>
+            <div class="online-pill">
+              <div class="dot"></div>
+              <span class="pill-text">● ONLINE</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="tabs">
+          <div class="tab active">All</div>
+          <div class="tab">Pending</div>
+          <div class="tab">In Transit</div>
+          <div class="tab">Done</div>
+        </div>
+
+        <!-- Order List -->
+        <div class="content">
+
+          <!-- Order 1 — Pending (new assignment) -->
+          <div class="order-card">
+            <div class="order-card-top">
+              <span class="order-id">Order #A-0042</span>
+              <span class="badge badge-pending">Pending</span>
+            </div>
+            <div class="addr-row">
+              <div class="addr-dot dot-green"></div>
+              <span class="addr-text">Accra Mall, Ring Road, Accra</span>
+            </div>
+            <div class="addr-row">
+              <div class="addr-dot dot-red"></div>
+              <span class="addr-text">East Legon, Adjiringanor, Accra</span>
+            </div>
+            <div class="order-footer">
+              <span class="order-price">GH₵ 45.00</span>
+              <span class="order-dist">7.2 km • ~18 min</span>
+            </div>
+            <div class="btn-row">
+              <button class="btn-accept">✓ Accept</button>
+              <button class="btn-reject">✕ Reject</button>
+            </div>
+          </div>
+
+          <!-- Order 2 — In Transit -->
+          <div class="order-card">
+            <div class="order-card-top">
+              <span class="order-id">Order #A-0039</span>
+              <span class="badge badge-transit">In Transit</span>
+            </div>
+            <div class="addr-row">
+              <div class="addr-dot dot-green"></div>
+              <span class="addr-text">KFC Osu, Oxford St, Accra</span>
+            </div>
+            <div class="addr-row">
+              <div class="addr-dot dot-red"></div>
+              <span class="addr-text">Labone, Accra — Apt 5B</span>
+            </div>
+            <div class="order-footer">
+              <span class="order-price">GH₵ 28.00</span>
+              <span class="order-dist">3.1 km • ~9 min</span>
+            </div>
+          </div>
+
+          <!-- Order 3 — Delivered -->
+          <div class="order-card">
+            <div class="order-card-top">
+              <span class="order-id">Order #A-0037</span>
+              <span class="badge badge-delivered">Delivered</span>
+            </div>
+            <div class="addr-row">
+              <div class="addr-dot dot-green"></div>
+              <span class="addr-text">Palace Mall, Spintex Rd</span>
+            </div>
+            <div class="addr-row">
+              <div class="addr-dot dot-red"></div>
+              <span class="addr-text">Tesano, Accra</span>
+            </div>
+            <div class="order-footer">
+              <span class="order-price">GH₵ 60.00</span>
+              <span class="order-dist">9.4 km</span>
+            </div>
+          </div>
+
+        </div><!-- /content -->
+
+        <!-- Bottom Nav -->
+        <div class="bottom-nav">
+          <div class="nav-item active">
+            <div class="nav-icon">📦</div>
+            <div class="nav-label" style="color:#F59E0B;">Orders</div>
+          </div>
+          <div class="nav-item">
+            <div class="nav-icon">📍</div>
+            <div class="nav-label">Tracking</div>
+          </div>
+          <div class="nav-item">
+            <div class="nav-icon">💰</div>
+            <div class="nav-label">Earnings</div>
+          </div>
+          <div class="nav-item">
+            <div class="nav-icon">👤</div>
+            <div class="nav-label">Profile</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /phone 1 -->
+
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN 2 — LIVE TRACKING MAP
+  ══════════════════════════════════════════════════ -->
+  <div class="phone-wrapper">
+    <div class="phone-label">📍 Live Tracking</div>
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <div class="icons"><span>●●●●</span><span>WiFi</span><span>🔋</span></div>
+        </div>
+
+        <!-- Header -->
+        <div class="header" style="padding:12px 16px 14px;">
+          <h2 style="color:#fff;font-size:17px;font-weight:700;">Live Tracking</h2>
+          <div class="sub">Order #A-0039 — In Transit</div>
+        </div>
+
+        <!-- Map Area -->
+        <div class="map-area">
+          <div class="map-bg"></div>
+
+          <!-- Road Network -->
+          <div class="map-road-primary-h" style="top:38%;left:0;right:0;"></div>
+          <div class="map-road-primary-h" style="top:62%;left:0;right:0;"></div>
+          <div class="map-road-v" style="left:30%;top:0;bottom:0;"></div>
+          <div class="map-road-v" style="right:22%;top:0;bottom:0;"></div>
+          <div class="map-road-h" style="top:22%;left:10%;right:30%;"></div>
+          <div class="map-road-h" style="top:50%;left:0;right:0;"></div>
+          <div class="map-road-v" style="left:55%;top:20%;bottom:40%;"></div>
+
+          <!-- Route line (amber) -->
+          <div class="map-route" style="top:36%;left:22%;width:36%;transform:rotate(8deg);"></div>
+          <div class="map-route" style="top:41%;left:48%;width:20%;transform:rotate(-15deg);"></div>
+
+          <!-- Pickup Pin (Green) -->
+          <div style="position:absolute;top:26%;left:18%;z-index:5;">
+            <div style="width:24px;height:24px;background:#10B981;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(16,185,129,0.4);">
+              <span style="transform:rotate(45deg);font-size:10px;">🟢</span>
+            </div>
+            <div style="margin-top:4px;background:#10B981;color:#fff;font-size:8px;font-weight:700;padding:2px 5px;border-radius:4px;white-space:nowrap;">Pickup</div>
+          </div>
+
+          <!-- Rider Pin (Amber) -->
+          <div style="position:absolute;top:35%;left:40%;z-index:6;">
+            <div style="width:28px;height:28px;background:#F59E0B;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 5px rgba(245,158,11,0.2);border:2px solid #fff;font-size:14px;">🏍️</div>
+          </div>
+
+          <!-- Dropoff Pin (Red) -->
+          <div style="position:absolute;top:45%;right:14%;z-index:5;">
+            <div style="width:24px;height:24px;background:#EF4444;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(239,68,68,0.4);">
+              <span style="transform:rotate(45deg);font-size:10px;">📍</span>
+            </div>
+            <div style="margin-top:4px;background:#EF4444;color:#fff;font-size:8px;font-weight:700;padding:2px 5px;border-radius:4px;white-space:nowrap;">Drop-off</div>
+          </div>
+
+          <!-- Floating Info Card -->
+          <div class="tracking-card">
+            <div class="tracking-card-header">🏍️ Order #A-0039 — In Transit</div>
+            <div class="track-stats">
+              <div class="track-stat">
+                <div class="track-stat-val">3.1</div>
+                <div class="track-stat-lbl">km left</div>
+              </div>
+              <div class="track-stat">
+                <div class="track-stat-val amber">~9 min</div>
+                <div class="track-stat-lbl">ETA</div>
+              </div>
+              <div class="track-stat">
+                <div class="track-stat-val" style="color:#10B981;">GH₵28</div>
+                <div class="track-stat-lbl">Earnings</div>
+              </div>
+            </div>
+            <button class="update-btn">✓ Mark as Delivered</button>
+          </div>
+
+        </div><!-- /map-area -->
+
+        <!-- Bottom Nav -->
+        <div class="bottom-nav">
+          <div class="nav-item"><div class="nav-icon">📦</div><div class="nav-label">Orders</div></div>
+          <div class="nav-item active"><div class="nav-icon">📍</div><div class="nav-label" style="color:#F59E0B;">Tracking</div></div>
+          <div class="nav-item"><div class="nav-icon">💰</div><div class="nav-label">Earnings</div></div>
+          <div class="nav-item"><div class="nav-icon">👤</div><div class="nav-label">Profile</div></div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /phone 2 -->
+
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN 3 — EARNINGS
+  ══════════════════════════════════════════════════ -->
+  <div class="phone-wrapper">
+    <div class="phone-label">💰 Earnings</div>
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <div class="icons"><span>●●●●</span><span>WiFi</span><span>🔋</span></div>
+        </div>
+
+        <!-- Earnings Header -->
+        <div class="earnings-header">
+          <div style="color:#fff;font-size:17px;font-weight:700;">Earnings</div>
+          <div class="earnings-big">GH₵ 1,240</div>
+          <div class="earnings-sub">Total lifetime earnings</div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-val" style="color:#10B981;">GH₵ 380</div>
+            <div class="stat-label">Available</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" style="color:#F59E0B;">GH₵ 73</div>
+            <div class="stat-label">Pending</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" style="color:#3B82F6;">142</div>
+            <div class="stat-label">Deliveries</div>
+          </div>
+        </div>
+
+        <!-- Request Payout Button -->
+        <div class="payout-btn">💳 Request Payout via Mobile Money</div>
+
+        <div class="section-title">Payout History</div>
+
+        <div class="content" style="padding-top:0;gap:6px;">
+          <div class="payout-row">
+            <div class="payout-icon">💸</div>
+            <div class="payout-info">
+              <div style="font-size:11px;font-weight:700;color:#0F172A;">GH₵ 250.00</div>
+              <div class="payout-date">Feb 14, 2026 · MTN MoMo</div>
+            </div>
+            <div class="payout-status-done">Paid</div>
+          </div>
+          <div class="payout-row">
+            <div class="payout-icon">💸</div>
+            <div class="payout-info">
+              <div style="font-size:11px;font-weight:700;color:#0F172A;">GH₵ 310.00</div>
+              <div class="payout-date">Feb 07, 2026 · MTN MoMo</div>
+            </div>
+            <div class="payout-status-done">Paid</div>
+          </div>
+          <div class="payout-row">
+            <div class="payout-icon">⏳</div>
+            <div class="payout-info">
+              <div style="font-size:11px;font-weight:700;color:#0F172A;">GH₵ 73.00</div>
+              <div class="payout-date">Feb 19, 2026 · MTN MoMo</div>
+            </div>
+            <div style="font-size:9px;font-weight:700;background:#FEF3C7;color:#B45309;padding:2px 7px;border-radius:999px;">Pending</div>
+          </div>
+          <div class="payout-row">
+            <div class="payout-icon">💸</div>
+            <div class="payout-info">
+              <div style="font-size:11px;font-weight:700;color:#0F172A;">GH₵ 400.00</div>
+              <div class="payout-date">Jan 31, 2026 · MTN MoMo</div>
+            </div>
+            <div class="payout-status-done">Paid</div>
+          </div>
+        </div>
+
+        <!-- Bottom Nav -->
+        <div class="bottom-nav">
+          <div class="nav-item"><div class="nav-icon">📦</div><div class="nav-label">Orders</div></div>
+          <div class="nav-item"><div class="nav-icon">📍</div><div class="nav-label">Tracking</div></div>
+          <div class="nav-item active"><div class="nav-icon">💰</div><div class="nav-label" style="color:#F59E0B;">Earnings</div></div>
+          <div class="nav-item"><div class="nav-icon">👤</div><div class="nav-label">Profile</div></div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /phone 3 -->
+
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN 4 — PROFILE
+  ══════════════════════════════════════════════════ -->
+  <div class="phone-wrapper">
+    <div class="phone-label">👤 Profile</div>
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <div class="icons"><span>●●●●</span><span>WiFi</span><span>🔋</span></div>
+        </div>
+
+        <!-- Profile Header -->
+        <div class="profile-header">
+          <div class="avatar">K</div>
+          <div class="profile-name">Kofi Mensah</div>
+          <div class="profile-company">ANOMAAH Delivery Co.</div>
+          <div class="online-pill" style="margin-top:8px;">
+            <div class="dot"></div>
+            <span class="pill-text">● ONLINE</span>
+          </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="profile-stats">
+          <div class="p-stat-card">
+            <div class="p-stat-val" style="color:#F59E0B;">4.8 ⭐</div>
+            <div class="p-stat-lbl">Rating</div>
+          </div>
+          <div class="p-stat-card">
+            <div class="p-stat-val" style="color:#3B82F6;">142</div>
+            <div class="p-stat-lbl">Deliveries</div>
+          </div>
+          <div class="p-stat-card">
+            <div class="p-stat-val" style="color:#10B981;">GH₵1,240</div>
+            <div class="p-stat-lbl">Earned</div>
+          </div>
+        </div>
+
+        <!-- Info Card -->
+        <div class="info-card">
+          <div class="info-row">
+            <span class="info-icon">📱</span>
+            <span class="info-label">Phone</span>
+            <span class="info-value">+233 24 123 4567</span>
+          </div>
+          <div class="info-row">
+            <span class="info-icon">🏍️</span>
+            <span class="info-label">Bike ID</span>
+            <span class="info-value">GH-ACC-0042</span>
+          </div>
+        </div>
+
+        <!-- Actions Card -->
+        <div class="action-card">
+          <div class="action-row">
+            <span class="action-icon">🔒</span>
+            <span class="action-text">Change Passcode</span>
+            <span class="action-arrow">›</span>
+          </div>
+          <div class="action-row">
+            <span class="action-icon">🔔</span>
+            <span class="action-text">Notifications</span>
+            <span class="action-arrow">›</span>
+          </div>
+          <div class="action-row">
+            <span class="action-icon">❓</span>
+            <span class="action-text">Help & Support</span>
+            <span class="action-arrow">›</span>
+          </div>
+          <div class="action-row danger">
+            <span class="action-icon" style="color:#EF4444;">🚪</span>
+            <span class="action-text" style="color:#EF4444;">Log Out</span>
+            <span class="action-arrow">›</span>
+          </div>
+        </div>
+
+        <!-- Bottom Nav -->
+        <div class="bottom-nav" style="margin-top:auto;">
+          <div class="nav-item"><div class="nav-icon">📦</div><div class="nav-label">Orders</div></div>
+          <div class="nav-item"><div class="nav-icon">📍</div><div class="nav-label">Tracking</div></div>
+          <div class="nav-item"><div class="nav-icon">💰</div><div class="nav-label">Earnings</div></div>
+          <div class="nav-item active"><div class="nav-icon">👤</div><div class="nav-label" style="color:#F59E0B;">Profile</div></div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /phone 4 -->
+
+</div><!-- /phones-grid -->
+
+
+<!-- ─── Feature Callouts ───────────────────────────────── -->
+<div class="features-section">
+  <div class="feature-card">
+    <div class="fi">⚡</div>
+    <h3>Auto-Assignment Engine</h3>
+    <p>AI-powered order routing assigns deliveries to the nearest available rider in real-time using WebSocket push.</p>
+  </div>
+  <div class="feature-card">
+    <div class="fi">🗺️</div>
+    <h3>Live GPS Tracking</h3>
+    <p>Customers and dispatchers see the rider's live location on a Google Map with distance & ETA updates every 5 sec.</p>
+  </div>
+  <div class="feature-card">
+    <div class="fi">💳</div>
+    <h3>Mobile Money Payouts</h3>
+    <p>Riders request instant payouts to MTN MoMo or Vodafone Cash. Processed automatically via Hubtel API.</p>
+  </div>
+  <div class="feature-card">
+    <div class="fi">📊</div>
+    <h3>Earnings Dashboard</h3>
+    <p>Full payout history, available balance, pending earnings and delivery count — all in one glance.</p>
+  </div>
+  <div class="feature-card">
+    <div class="fi">🔒</div>
+    <h3>Secure PIN Auth</h3>
+    <p>Riders log in with a 5-digit passcode tied to their phone number. JWT sessions with refresh token rotation.</p>
+  </div>
+  <div class="feature-card">
+    <div class="fi">📦</div>
+    <h3>Order State Machine</h3>
+    <p>Pending → Assigned → Picked Up → In Transit → Delivered. Every state change triggers customer notifications.</p>
+  </div>
+</div>
+
+<div class="footer-note">
+  <strong>ANOMAAH Delivery Platform</strong> · Rider App v1.0 · Android (Kotlin + Jetpack) · Backend: FastAPI microservices
+</div>
+
+</body>
+</html>

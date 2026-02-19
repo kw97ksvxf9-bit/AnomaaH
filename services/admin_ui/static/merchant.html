@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>Merchant Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    .fade-in{animation:fadeIn .35s ease}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+    .stat-card{transition:transform .15s,box-shadow .15s}
+    .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.12)}
+    .modal-overlay{background:rgba(0,0,0,.45);backdrop-filter:blur(2px)}
+    #fab{position:fixed;bottom:24px;right:24px;z-index:150}
+    .fab-btn{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer;transition:transform .2s}
+    .fab-btn:hover{transform:scale(1.08)}
+  </style>
+</head>
+<body class="bg-orange-50/40 text-slate-800 min-h-screen">
+
+<!-- ===== NAVBAR ===== -->
+<nav class="bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
+    <div class="flex items-center gap-3">
+      <span class="text-2xl">🏪</span>
+      <h1 class="text-lg font-bold tracking-tight hidden sm:block">Merchant Dashboard</h1>
+      <h1 class="text-lg font-bold tracking-tight sm:hidden">Merchant</h1>
+    </div>
+    <div class="flex items-center gap-3">
+      <span id="navStore" class="text-sm font-medium opacity-90 hidden sm:inline"></span>
+      <button onclick="logout()" class="bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg text-sm font-medium transition">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 fade-in">
+
+  <!-- Greeting -->
+  <div class="mb-6">
+    <h2 class="text-xl sm:text-2xl font-bold text-slate-800">Welcome back, <span id="greetName" class="text-amber-700">Merchant</span></h2>
+    <p class="text-slate-500 text-sm mt-1">Manage your deliveries and track orders</p>
+  </div>
+
+  <!-- ===== STAT CARDS ===== -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+    <div class="stat-card bg-white rounded-xl shadow p-4 border-l-4 border-amber-500 cursor-pointer" onclick="filterOrders('all')">
+      <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Orders</div>
+      <div id="statTotal" class="text-3xl font-bold text-slate-800 mt-1">–</div>
+    </div>
+    <div class="stat-card bg-white rounded-xl shadow p-4 border-l-4 border-yellow-400 cursor-pointer" onclick="filterOrders('PENDING')">
+      <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Pending</div>
+      <div id="statPending" class="text-3xl font-bold text-yellow-600 mt-1">–</div>
+    </div>
+    <div class="stat-card bg-white rounded-xl shadow p-4 border-l-4 border-blue-500 cursor-pointer" onclick="filterOrders('ASSIGNED')">
+      <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Assigned</div>
+      <div id="statAssigned" class="text-3xl font-bold text-blue-600 mt-1">–</div>
+    </div>
+    <div class="stat-card bg-white rounded-xl shadow p-4 border-l-4 border-orange-500 cursor-pointer" onclick="filterOrders('IN_TRANSIT')">
+      <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">In Transit</div>
+      <div id="statTransit" class="text-3xl font-bold text-orange-600 mt-1">–</div>
+    </div>
+    <div class="stat-card bg-white rounded-xl shadow p-4 border-l-4 border-emerald-500 cursor-pointer" onclick="filterOrders('DELIVERED')">
+      <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Delivered</div>
+      <div id="statDelivered" class="text-3xl font-bold text-emerald-600 mt-1">–</div>
+    </div>
+  </div>
+
+  <!-- ===== TWO-COLUMN LAYOUT ===== -->
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+    <!-- LEFT: Place Order Form -->
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-xl shadow p-5">
+        <h3 class="text-lg font-bold text-slate-800 mb-1">📦 Place New Order</h3>
+        <p class="text-xs text-slate-400 mb-4">Create a delivery request</p>
+
+        <div id="pickupInfo" class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+          <span class="font-semibold">Pickup:</span> <span id="storeAddr">Loading…</span>
+        </div>
+
+        <form id="orderForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Drop-off Address <span class="text-red-500">*</span></label>
+            <input id="dropoffAddr" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400" placeholder="e.g. 15 Oxford St, Osu" required/>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">Latitude</label>
+              <input id="dropoffLat" type="number" step="any" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" placeholder="5.6037"/>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">Longitude</label>
+              <input id="dropoffLng" type="number" step="any" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" placeholder="-0.1870"/>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Recipient Phone</label>
+            <input id="recipientPhone" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" placeholder="024 000 0000"/>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">Price (GHS)</label>
+              <input id="priceGhs" type="number" step="0.01" value="10" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"/>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">Est. Distance (km)</label>
+              <input id="distanceKm" type="number" step="0.1" value="5" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"/>
+            </div>
+          </div>
+          <button type="submit" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-3 rounded-lg transition shadow-md">
+            🚀 Place Order
+          </button>
+        </form>
+        <div id="orderMsg" class="mt-3 text-sm font-medium"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Recent Orders -->
+    <div class="lg:col-span-3">
+      <div class="bg-white rounded-xl shadow p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-bold text-slate-800">📋 Recent Orders</h3>
+            <p id="filterLabel" class="text-xs text-slate-400">Showing all orders</p>
+          </div>
+          <button onclick="openAllOrders()" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-sm font-semibold px-4 py-2 rounded-lg transition">
+            View All Past Orders
+          </button>
+        </div>
+        <div id="recentOrders" class="overflow-x-auto">
+          <div class="text-center text-slate-400 py-8">Loading orders…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ALL ORDERS MODAL ===== -->
+<div id="allOrdersModal" class="fixed inset-0 z-[200] hidden">
+  <div class="modal-overlay absolute inset-0" onclick="closeAllOrders()"></div>
+  <div class="relative z-10 mt-10 max-w-5xl max-h-[85vh] bg-white rounded-2xl shadow-2xl flex flex-col mx-4 sm:mx-auto">
+    <div class="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-amber-50 to-orange-50 rounded-t-2xl">
+      <h3 class="text-lg font-bold text-slate-800">📦 All Orders</h3>
+      <button onclick="closeAllOrders()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+    </div>
+    <!-- Filters -->
+    <div class="px-6 py-3 border-b flex flex-wrap gap-2">
+      <button onclick="modalFilter('all', this)" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-amber-500 text-white">All</button>
+      <button onclick="modalFilter('PENDING', this)" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-yellow-100">Pending</button>
+      <button onclick="modalFilter('ASSIGNED', this)" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-blue-100">Assigned</button>
+      <button onclick="modalFilter('IN_TRANSIT', this)" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-orange-100">In Transit</button>
+      <button onclick="modalFilter('DELIVERED', this)" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-emerald-100">Delivered</button>
+      <button onclick="modalFilter('CANCELLED', this)" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-red-100">Cancelled</button>
+    </div>
+    <div id="allOrdersBody" class="p-6 overflow-y-auto flex-1">
+      <div class="text-center text-slate-400 py-8">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FAB ===== -->
+<div id="fab">
+  <button onclick="window.scrollTo({top:0,behavior:'smooth'})" class="fab-btn bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg" title="Back to top">↑</button>
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<script>
+const $ = id => document.getElementById(id);
+
+let allOrders = [];
+let currentFilter = 'all';
+
+// ---- Auth helpers ----
+async function apiFetch(url, opts = {}) {
+  opts.credentials = 'include';
+  const r = await fetch(url, opts);
+  if (r.status === 401) { window.location.href = '/'; return null; }
+  return r;
+}
+
+function logout() {
+  fetch('/api/logout', { method: 'POST', credentials: 'include' }).finally(() => window.location.href = '/');
+}
+
+// ---- Status badge helper ----
+function badge(st) {
+  const map = {
+    PENDING:    'bg-yellow-100 text-yellow-800',
+    ASSIGNED:   'bg-blue-100 text-blue-800',
+    PICKED_UP:  'bg-indigo-100 text-indigo-800',
+    IN_TRANSIT: 'bg-orange-100 text-orange-800',
+    DELIVERED:  'bg-emerald-100 text-emerald-800',
+    CANCELLED:  'bg-red-100 text-red-800',
+  };
+  const cls = map[st] || 'bg-slate-100 text-slate-600';
+  return `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${cls}">${st}</span>`;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = typeof d === 'number' ? new Date(d * 1000) : new Date(d);
+  return dt.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'2-digit' }) + ' ' +
+         dt.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+}
+
+// ---- Build orders table ----
+function buildTable(orders, limit) {
+  const list = limit ? orders.slice(0, limit) : orders;
+  if (!list.length) return '<div class="text-center text-slate-400 py-8">No orders found</div>';
+  return `
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-xs text-slate-500 uppercase border-b">
+          <th class="pb-2 pr-3">Order ID</th>
+          <th class="pb-2 pr-3">Status</th>
+          <th class="pb-2 pr-3 hidden sm:table-cell">Drop-off</th>
+          <th class="pb-2 pr-3 hidden md:table-cell">Price</th>
+          <th class="pb-2 pr-3">Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${list.map(o => `
+          <tr class="border-b border-slate-100 hover:bg-orange-50/40 transition">
+            <td class="py-2.5 pr-3 font-mono text-xs text-slate-600">${(o.id || '').slice(0, 8)}…</td>
+            <td class="py-2.5 pr-3">${badge(o.status)}</td>
+            <td class="py-2.5 pr-3 hidden sm:table-cell text-slate-600 truncate max-w-[200px]">${o.dropoff_address || '—'}</td>
+            <td class="py-2.5 pr-3 hidden md:table-cell font-medium">₵${(o.price_ghs || 0).toFixed(2)}</td>
+            <td class="py-2.5 text-slate-500 text-xs">${fmtDate(o.created_at)}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+// ---- Load dashboard ----
+async function loadDashboard() {
+  const r = await apiFetch('/api/merchant/dashboard');
+  if (!r) return;
+  const d = await r.json();
+
+  // Greeting & navbar
+  $('greetName').textContent = d.store_name || d.username || 'Merchant';
+  $('navStore').textContent = d.store_name || '';
+  $('storeAddr').textContent = d.store_address || 'Not set — contact admin';
+
+  // Stat cards
+  $('statTotal').textContent = d.total_orders;
+  $('statPending').textContent = d.pending;
+  $('statAssigned').textContent = d.assigned;
+  $('statTransit').textContent = d.in_transit;
+  $('statDelivered').textContent = d.delivered;
+
+  // Store orders globally
+  allOrders = d.orders || [];
+
+  // Recent orders (last 10)
+  renderRecent();
+}
+
+function renderRecent() {
+  let filtered = currentFilter === 'all' ? allOrders : allOrders.filter(o => {
+    if (currentFilter === 'IN_TRANSIT') return o.status === 'IN_TRANSIT' || o.status === 'PICKED_UP';
+    return o.status === currentFilter;
+  });
+  $('filterLabel').textContent = currentFilter === 'all' ? 'Showing all orders' : `Filtered: ${currentFilter.replace('_', ' ')}`;
+  $('recentOrders').innerHTML = buildTable(filtered, 10);
+}
+
+function filterOrders(status) {
+  currentFilter = status;
+  renderRecent();
+}
+
+// ---- Place Order ----
+$('orderForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const msg = $('orderMsg');
+  msg.textContent = 'Placing order…';
+  msg.className = 'mt-3 text-sm font-medium text-amber-600';
+
+  const payload = {
+    pickup_address: $('storeAddr').textContent || 'Store',
+    pickup_lat: 0,
+    pickup_lng: 0,
+    dropoff_address: $('dropoffAddr').value,
+    dropoff_lat: parseFloat($('dropoffLat').value) || 0,
+    dropoff_lng: parseFloat($('dropoffLng').value) || 0,
+    recipient_phone: $('recipientPhone').value,
+    price_ghs: parseFloat($('priceGhs').value) || 10,
+    distance_km: parseFloat($('distanceKm').value) || 5,
+    eta_min: 30,
+  };
+
+  try {
+    const r = await apiFetch('/api/merchant/orders/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (r && r.ok) {
+      msg.textContent = '✅ Order placed successfully!';
+      msg.className = 'mt-3 text-sm font-medium text-emerald-600';
+      $('orderForm').reset();
+      $('priceGhs').value = '10';
+      $('distanceKm').value = '5';
+      setTimeout(loadDashboard, 800);
+    } else {
+      const err = r ? await r.text() : 'Network error';
+      msg.textContent = '❌ Failed: ' + err;
+      msg.className = 'mt-3 text-sm font-medium text-red-600';
+    }
+  } catch (ex) {
+    msg.textContent = '❌ Error: ' + ex.message;
+    msg.className = 'mt-3 text-sm font-medium text-red-600';
+  }
+};
+
+// ---- All Orders Modal ----
+function openAllOrders() {
+  $('allOrdersModal').classList.remove('hidden');
+  modalFilter('all', document.querySelector('.filter-btn'));
+}
+function closeAllOrders() {
+  $('allOrdersModal').classList.add('hidden');
+}
+function modalFilter(status, btn) {
+  // Highlight active filter button
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.className = 'filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200';
+  });
+  if (btn) btn.className = 'filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-amber-500 text-white';
+
+  let filtered = status === 'all' ? allOrders : allOrders.filter(o => {
+    if (status === 'IN_TRANSIT') return o.status === 'IN_TRANSIT' || o.status === 'PICKED_UP';
+    return o.status === status;
+  });
+  $('allOrdersBody').innerHTML = buildTable(filtered);
+}
+
+// Escape key to close modal
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAllOrders(); });
+
+// ---- Init ----
+loadDashboard();
+</script>
+</body>
+</html>

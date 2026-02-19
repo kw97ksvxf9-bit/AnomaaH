@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1"/>
+  <title>ANOMAAH — Book a Delivery</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{brand:{50:'#fff7ed',100:'#ffedd5',200:'#fed7aa',300:'#fdba74',400:'#fb923c',500:'#f97316',600:'#ea580c',700:'#c2410c',800:'#9a3412',900:'#7c2d12'}}}}}</script>
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;margin:0;background:#f8fafc}
+    input,select,textarea,button{-webkit-appearance:none;-moz-appearance:none;appearance:none;font-family:inherit}
+    input:focus,textarea:focus{outline:none;border-color:#f97316;box-shadow:0 0 0 3px rgba(249,115,22,.15)}
+    #map{width:100%;height:280px;border-radius:12px;background:#e2e8f0;position:relative;overflow:hidden}
+    @media(min-width:640px){#map{height:380px}}
+    .map-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#94a3b8;text-align:center;padding:20px}
+    .form-field{margin-bottom:16px}
+    .form-label{display:block;font-size:.8rem;font-weight:600;color:#475569;margin-bottom:6px;letter-spacing:.02em}
+    .form-input{width:100%;border:1.5px solid #cbd5e1;border-radius:10px;padding:14px 16px;font-size:16px;transition:border-color .15s,box-shadow .15s;background:#fff}
+    .form-input::placeholder{color:#94a3b8}
+    .btn-primary{width:100%;padding:16px;border-radius:12px;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;font-size:1.05rem;font-weight:700;border:none;cursor:pointer;transition:transform .1s,box-shadow .15s;box-shadow:0 4px 14px rgba(249,115,22,.35)}
+    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(249,115,22,.4)}
+    .btn-primary:active{transform:translateY(0)}
+    .btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
+    .price-card{background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1.5px solid #fed7aa;border-radius:12px;padding:16px;display:none}
+    .price-card.visible{display:block;animation:slideUp .3s ease-out}
+    @keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    .step-indicator{display:flex;align-items:center;gap:8px;margin-bottom:20px}
+    .step-dot{width:10px;height:10px;border-radius:50%;background:#cbd5e1;transition:background .2s}
+    .step-dot.active{background:#f97316}
+    .step-dot.done{background:#22c55e}
+    .step-line{flex:1;height:2px;background:#e2e8f0}
+    .result-card{background:#fff;border-radius:16px;border:1.5px solid #e2e8f0;padding:24px;text-align:center;display:none}
+    .result-card.visible{display:block;animation:slideUp .4s ease-out}
+    .pin-icon{font-size:32px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.2))}
+    .loc-input-wrap{position:relative}
+    .loc-input-wrap .loc-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none}
+    .loc-input-wrap input{padding-left:42px}
+    .swap-btn{position:absolute;right:-24px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;background:#fff;border:1.5px solid #e2e8f0;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.08);transition:transform .15s}
+    .swap-btn:hover{transform:translateY(-50%) scale(1.1)}
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:12px 24px;border-radius:10px;font-size:.875rem;z-index:100;opacity:0;pointer-events:none;transition:opacity .2s}
+    .toast.show{opacity:1}
+    /* Google Autocomplete dropdown styling */
+    .pac-container{border-radius:10px;border:none;box-shadow:0 10px 40px rgba(0,0,0,.12);margin-top:4px;font-family:inherit;z-index:1100!important}
+    .pac-item{padding:10px 14px;font-size:.875rem;border:none;cursor:pointer}
+    .pac-item:hover{background:#fff7ed}
+    .pac-icon{display:none}
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+  <div class="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">P</div>
+      <div>
+        <div class="font-bold text-slate-900 text-base leading-tight tracking-wide">ANOMAAH</div>
+        <div class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Delivery</div>
+      </div>
+    </div>
+    <a href="tel:+233000000000" class="flex items-center gap-1.5 text-xs text-slate-500 px-3 py-2 rounded-lg hover:bg-slate-50 transition">
+      <span>📞</span> Help
+    </a>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="max-w-lg mx-auto px-4 py-5 pb-10">
+
+  <!-- Step Indicators -->
+  <div class="step-indicator" id="steps">
+    <div class="step-dot active" id="step1"></div>
+    <div class="step-line"></div>
+    <div class="step-dot" id="step2"></div>
+    <div class="step-line"></div>
+    <div class="step-dot" id="step3"></div>
+  </div>
+
+  <!-- Map -->
+  <div id="map" class="mb-5">
+    <div class="map-placeholder" id="mapPlaceholder">
+      <div class="text-4xl mb-2">🗺️</div>
+      <div class="text-sm font-medium">Map loads with Google API key</div>
+      <div class="text-xs mt-1">Enter addresses below to get a quote</div>
+    </div>
+  </div>
+
+  <!-- Booking Form -->
+  <form id="bookingForm" onsubmit="submitBooking(event)" autocomplete="off">
+
+    <!-- Pickup & Dropoff -->
+    <div class="relative mb-1">
+      <div class="form-field loc-input-wrap">
+        <label class="form-label">📍 Pickup Location</label>
+        <span class="loc-icon">🟢</span>
+        <input type="text" id="pickupAddress" class="form-input" placeholder="Enter pickup address" required autocomplete="off"/>
+      </div>
+      <div class="form-field loc-input-wrap">
+        <label class="form-label">📍 Drop-off Location</label>
+        <span class="loc-icon">🔴</span>
+        <input type="text" id="dropoffAddress" class="form-input" placeholder="Where should we deliver?" required autocomplete="off"/>
+      </div>
+      <button type="button" class="swap-btn" onclick="swapAddresses()" title="Swap locations">⇅</button>
+    </div>
+
+    <!-- Hidden lat/lng -->
+    <input type="hidden" id="pickupLat" value="5.6037"/>
+    <input type="hidden" id="pickupLng" value="-0.1870"/>
+    <input type="hidden" id="dropoffLat" value="5.6500"/>
+    <input type="hidden" id="dropoffLng" value="-0.1960"/>
+
+    <!-- Your Details -->
+    <div class="form-field">
+      <label class="form-label">👤 Your Name</label>
+      <input type="text" id="senderName" class="form-input" placeholder="Full name" required/>
+    </div>
+
+    <div class="form-field">
+      <label class="form-label">📱 Phone Number</label>
+      <input type="tel" id="senderPhone" class="form-input" placeholder="+233 XX XXX XXXX" required pattern="[0-9+\s\-]{7,15}"/>
+    </div>
+
+    <!-- Delivery Notes -->
+    <div class="form-field">
+      <label class="form-label">📝 Delivery Notes <span class="font-normal text-slate-400">(optional)</span></label>
+      <textarea id="deliveryNotes" class="form-input" rows="2" placeholder="E.g. ring the bell, leave at gate..." style="resize:none"></textarea>
+    </div>
+
+    <!-- Price Estimate Card -->
+    <div class="price-card mb-5" id="priceCard">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-semibold text-orange-800">Delivery Estimate</span>
+        <button type="button" onclick="recalculate()" class="text-xs text-orange-600 font-medium hover:underline">↻ Recalculate</button>
+      </div>
+      <div class="grid grid-cols-3 gap-3 text-center">
+        <div>
+          <div class="text-xs text-orange-600 font-medium">Distance</div>
+          <div class="text-lg font-bold text-slate-900" id="estDistance">—</div>
+          <div class="text-[10px] text-slate-400">km</div>
+        </div>
+        <div>
+          <div class="text-xs text-orange-600 font-medium">ETA</div>
+          <div class="text-lg font-bold text-slate-900" id="estEta">—</div>
+          <div class="text-[10px] text-slate-400">minutes</div>
+        </div>
+        <div>
+          <div class="text-xs text-orange-600 font-medium">Price</div>
+          <div class="text-lg font-bold text-orange-700" id="estPrice">—</div>
+          <div class="text-[10px] text-slate-400">GH₵</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Get Quote / Submit -->
+    <button type="button" id="quoteBtn" class="btn-primary mb-3" onclick="getQuote()">
+      🚀 Get Delivery Quote
+    </button>
+    <button type="submit" id="submitBtn" class="btn-primary hidden mb-3">
+      ✅ Confirm & Book Delivery
+    </button>
+    <p class="text-xs text-center text-slate-400">Payment via Mobile Money (MoMo) · Powered by Hubtel</p>
+  </form>
+
+  <!-- Success Result -->
+  <div class="result-card" id="resultCard">
+    <div class="text-5xl mb-3">🎉</div>
+    <h2 class="text-xl font-bold text-slate-900 mb-2">Booking Confirmed!</h2>
+    <p class="text-sm text-slate-500 mb-4">Your delivery request has been placed. A rider will be assigned shortly.</p>
+    <div class="bg-orange-50 rounded-lg p-4 mb-4 text-left space-y-2">
+      <div class="flex justify-between text-sm"><span class="text-slate-500">Distance:</span><span class="font-semibold" id="resDistance"></span></div>
+      <div class="flex justify-between text-sm"><span class="text-slate-500">ETA:</span><span class="font-semibold" id="resEta"></span></div>
+      <div class="flex justify-between text-sm"><span class="text-slate-500">Price:</span><span class="font-bold text-orange-700" id="resPrice"></span></div>
+    </div>
+    <div id="paymentInfo" class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-sm text-amber-800 text-left"></div>
+    <button onclick="resetForm()" class="btn-primary">📦 Book Another Delivery</button>
+  </div>
+</main>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── State ── */
+let quoteData=null;
+let googleLoaded=false;
+let pickupAutocomplete=null, dropoffAutocomplete=null;
+let mapInstance=null;
+let pickupMarker=null, dropoffMarker=null;
+let routeLine=null;
+
+/* ── Toast ── */
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3000)}
+
+/* ── Swap Addresses ── */
+function swapAddresses(){
+  const pA=document.getElementById('pickupAddress'),dA=document.getElementById('dropoffAddress');
+  const pLat=document.getElementById('pickupLat'),pLng=document.getElementById('pickupLng');
+  const dLat=document.getElementById('dropoffLat'),dLng=document.getElementById('dropoffLng');
+  [pA.value,dA.value]=[dA.value,pA.value];
+  [pLat.value,dLat.value]=[dLat.value,pLat.value];
+  [pLng.value,dLng.value]=[dLng.value,pLng.value];
+  if(quoteData) quoteData=null;
+  updateMapMarkers();
+}
+
+/* ── Step Management ── */
+function setStep(n){
+  for(let i=1;i<=3;i++){
+    const dot=document.getElementById('step'+i);
+    dot.classList.remove('active','done');
+    if(i<n)dot.classList.add('done');
+    else if(i===n)dot.classList.add('active');
+  }
+}
+
+/* ── Google Maps Init (called when API loads) ── */
+function initMap(){
+  googleLoaded=true;
+  document.getElementById('mapPlaceholder').style.display='none';
+
+  mapInstance=new google.maps.Map(document.getElementById('map'),{
+    center:{lat:5.6037,lng:-0.1870},
+    zoom:13,
+    disableDefaultUI:true,
+    zoomControl:true,
+    mapTypeControl:false,
+    styles:[
+      {featureType:'poi',stylers:[{visibility:'simplified'}]},
+      {featureType:'transit',stylers:[{visibility:'off'}]}
+    ]
+  });
+
+  // Setup autocomplete
+  const pickupInput=document.getElementById('pickupAddress');
+  const dropoffInput=document.getElementById('dropoffAddress');
+  const options={componentRestrictions:{country:'gh'},fields:['geometry','formatted_address','name']};
+
+  pickupAutocomplete=new google.maps.places.Autocomplete(pickupInput,options);
+  dropoffAutocomplete=new google.maps.places.Autocomplete(dropoffInput,options);
+
+  pickupAutocomplete.addListener('place_changed',()=>{
+    const place=pickupAutocomplete.getPlace();
+    if(place.geometry){
+      document.getElementById('pickupLat').value=place.geometry.location.lat();
+      document.getElementById('pickupLng').value=place.geometry.location.lng();
+      document.getElementById('pickupAddress').value=place.formatted_address||place.name;
+      updateMapMarkers();
+    }
+  });
+  dropoffAutocomplete.addListener('place_changed',()=>{
+    const place=dropoffAutocomplete.getPlace();
+    if(place.geometry){
+      document.getElementById('dropoffLat').value=place.geometry.location.lat();
+      document.getElementById('dropoffLng').value=place.geometry.location.lng();
+      document.getElementById('dropoffAddress').value=place.formatted_address||place.name;
+      updateMapMarkers();
+    }
+  });
+
+  // Click-to-set (tap on map to set pin)
+  let settingPin='pickup'; // toggle between pickup/dropoff
+  mapInstance.addListener('click',(e)=>{
+    const lat=e.latLng.lat(), lng=e.latLng.lng();
+    if(settingPin==='pickup'){
+      document.getElementById('pickupLat').value=lat;
+      document.getElementById('pickupLng').value=lng;
+      reverseGeocode(lat,lng,'pickupAddress');
+      settingPin='dropoff';
+      toast('Now tap drop-off location');
+    } else {
+      document.getElementById('dropoffLat').value=lat;
+      document.getElementById('dropoffLng').value=lng;
+      reverseGeocode(lat,lng,'dropoffAddress');
+      settingPin='pickup';
+      toast('Locations set! Get a quote below');
+    }
+    updateMapMarkers();
+  });
+
+  toast('Tap map to set pickup, then drop-off');
+}
+
+function reverseGeocode(lat,lng,inputId){
+  const geocoder=new google.maps.Geocoder();
+  geocoder.geocode({location:{lat,lng}},(results,status)=>{
+    if(status==='OK'&&results[0]){
+      document.getElementById(inputId).value=results[0].formatted_address;
+    }
+  });
+}
+
+function updateMapMarkers(){
+  if(!mapInstance)return;
+  const pLat=parseFloat(document.getElementById('pickupLat').value);
+  const pLng=parseFloat(document.getElementById('pickupLng').value);
+  const dLat=parseFloat(document.getElementById('dropoffLat').value);
+  const dLng=parseFloat(document.getElementById('dropoffLng').value);
+
+  if(pickupMarker)pickupMarker.setMap(null);
+  if(dropoffMarker)dropoffMarker.setMap(null);
+  if(routeLine)routeLine.setMap(null);
+
+  if(pLat&&pLng){
+    pickupMarker=new google.maps.Marker({position:{lat:pLat,lng:pLng},map:mapInstance,label:{text:'P',color:'#fff',fontWeight:'bold'},icon:{path:google.maps.SymbolPath.CIRCLE,scale:14,fillColor:'#22c55e',fillOpacity:1,strokeWeight:2,strokeColor:'#fff'}});
+  }
+  if(dLat&&dLng){
+    dropoffMarker=new google.maps.Marker({position:{lat:dLat,lng:dLng},map:mapInstance,label:{text:'D',color:'#fff',fontWeight:'bold'},icon:{path:google.maps.SymbolPath.CIRCLE,scale:14,fillColor:'#ef4444',fillOpacity:1,strokeWeight:2,strokeColor:'#fff'}});
+  }
+  if(pLat&&pLng&&dLat&&dLng){
+    routeLine=new google.maps.Polyline({path:[{lat:pLat,lng:pLng},{lat:dLat,lng:dLng}],geodesic:true,strokeColor:'#f97316',strokeOpacity:.8,strokeWeight:3,map:mapInstance});
+    const bounds=new google.maps.LatLngBounds();
+    bounds.extend({lat:pLat,lng:pLng});bounds.extend({lat:dLat,lng:dLng});
+    mapInstance.fitBounds(bounds,{top:40,bottom:40,left:40,right:40});
+  }
+}
+
+/* ── Fallback distance calc (no Google API) ── */
+function fallbackDistance(lat1,lng1,lat2,lng2){
+  const R=6371;
+  const dLat=(lat2-lat1)*Math.PI/180;
+  const dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+/* ── Get Quote ── */
+async function getQuote(){
+  const pickup=document.getElementById('pickupAddress').value.trim();
+  const dropoff=document.getElementById('dropoffAddress').value.trim();
+  const phone=document.getElementById('senderPhone').value.trim();
+  const name=document.getElementById('senderName').value.trim();
+
+  if(!pickup||!dropoff){toast('Please enter both addresses');return}
+  if(!name){toast('Please enter your name');return}
+  if(!phone){toast('Please enter your phone number');return}
+
+  const btn=document.getElementById('quoteBtn');
+  btn.disabled=true;btn.textContent='⏳ Getting quote...';
+
+  const body={
+    pickup_address:pickup,
+    pickup_lat:parseFloat(document.getElementById('pickupLat').value)||5.6037,
+    pickup_lng:parseFloat(document.getElementById('pickupLng').value)||-0.1870,
+    dropoff_address:dropoff,
+    dropoff_lat:parseFloat(document.getElementById('dropoffLat').value)||5.6500,
+    dropoff_lng:parseFloat(document.getElementById('dropoffLng').value)||-0.1960,
+    phone:phone
+  };
+
+  try{
+    const r=await fetch('/api/book',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(!r.ok){toast(d.detail||'Failed to get quote');btn.disabled=false;btn.textContent='🚀 Get Delivery Quote';return}
+
+    quoteData=d;
+    document.getElementById('estDistance').textContent=d.distance_km?.toFixed(1)||'—';
+    document.getElementById('estEta').textContent=d.eta_min||'—';
+    // Price comes in pesewas from booking service, convert to GH₵
+    const priceGhs=(d.price_ghs>=100)?(d.price_ghs/100).toFixed(2):d.price_ghs?.toFixed(2)||'0.00';
+    document.getElementById('estPrice').textContent=priceGhs;
+    document.getElementById('priceCard').classList.add('visible');
+    btn.classList.add('hidden');
+    document.getElementById('submitBtn').classList.remove('hidden');
+    setStep(2);
+    toast('Quote ready! Review and confirm');
+  }catch(e){
+    toast('Network error — check your connection');
+  }
+  btn.disabled=false;btn.textContent='🚀 Get Delivery Quote';
+}
+
+function recalculate(){
+  document.getElementById('priceCard').classList.remove('visible');
+  document.getElementById('submitBtn').classList.add('hidden');
+  document.getElementById('quoteBtn').classList.remove('hidden');
+  quoteData=null;
+  setStep(1);
+}
+
+/* ── Submit Booking ── */
+async function submitBooking(e){
+  e.preventDefault();
+  if(!quoteData){toast('Please get a quote first');return}
+
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true;btn.textContent='⏳ Confirming...';
+
+  // Show results immediately (booking is already done via quote call which initiated payment)
+  const priceGhs=(quoteData.price_ghs>=100)?(quoteData.price_ghs/100).toFixed(2):quoteData.price_ghs?.toFixed(2)||'0.00';
+  document.getElementById('resDistance').textContent=(quoteData.distance_km?.toFixed(1)||'—')+' km';
+  document.getElementById('resEta').textContent=(quoteData.eta_min||'—')+' minutes';
+  document.getElementById('resPrice').textContent='GH₵ '+priceGhs;
+
+  // Payment info
+  const pp=quoteData.payment_payload;
+  let payHtml='';
+  if(pp&&pp.payment_url){
+    payHtml='<p class="mb-2"><strong>💳 Complete Payment:</strong></p><a href="'+pp.payment_url+'" target="_blank" class="inline-block px-4 py-2 bg-orange-600 text-white rounded-lg font-medium text-sm hover:bg-orange-700">Pay Now →</a>';
+  } else if(pp&&pp.error){
+    payHtml='<p>⚠️ Payment service is temporarily unavailable. A team member will contact you on <strong>'+document.getElementById('senderPhone').value+'</strong> to arrange payment.</p>';
+  } else {
+    payHtml='<p>📱 You will receive a MoMo prompt on <strong>'+document.getElementById('senderPhone').value+'</strong>. Please approve the payment to confirm your delivery.</p>';
+  }
+  document.getElementById('paymentInfo').innerHTML=payHtml;
+
+  document.getElementById('bookingForm').style.display='none';
+  document.getElementById('resultCard').classList.add('visible');
+  setStep(3);
+  btn.disabled=false;btn.textContent='✅ Confirm & Book Delivery';
+}
+
+function resetForm(){
+  document.getElementById('bookingForm').style.display='';
+  document.getElementById('bookingForm').reset();
+  document.getElementById('resultCard').classList.remove('visible');
+  document.getElementById('priceCard').classList.remove('visible');
+  document.getElementById('submitBtn').classList.add('hidden');
+  document.getElementById('quoteBtn').classList.remove('hidden');
+  quoteData=null;
+  setStep(1);
+}
+
+/* ── Try to load Google Maps dynamically ── */
+(async function tryLoadGoogleMaps(){
+  try{
+    const r=await fetch('/api/maps-config');
+    const d=await r.json();
+    if(d.has_key&&d.api_key){
+      const script=document.createElement('script');
+      script.src='https://maps.googleapis.com/maps/api/js?key='+d.api_key+'&libraries=places&callback=initMap';
+      script.async=true;script.defer=true;
+      script.onerror=()=>console.log('Google Maps failed to load');
+      document.head.appendChild(script);
+    } else {
+      document.getElementById('mapPlaceholder').innerHTML='<div class="text-4xl mb-2">🗺️</div><div class="text-sm font-medium text-slate-500">Interactive map coming soon</div><div class="text-xs mt-2 text-slate-400">Enter addresses manually below to get a quote</div>';
+    }
+  }catch(e){
+    console.log('Could not check maps config:',e);
+  }
+})();
+</script>
+</body>
+</html>

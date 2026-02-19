@@ -1,0 +1,516 @@
+<!doctype html><html lang="en"><head>  <meta charset="utf-8"/>  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>  <title>ANOMAAH — Fleet Management</title>  <script src="https://cdn.tailwindcss.com"></script>  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>  <style>    body{font-family:'Inter',system-ui,-apple-system,sans-serif}    .stat-card{transition:transform .15s,box-shadow .15s;cursor:pointer}    .stat-card:hover{transform:translateY(-3px);box-shadow:0 8px 25px -5px rgba(0,0,0,.12)}    .status-badge{font-size:.7rem;padding:2px 8px;border-radius:9999px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}    .fade-in{animation:fadeIn .4s ease-out}    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}    .table-row:hover{background:#fffbeb}    .skeleton{background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px}    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}    ::-webkit-scrollbar{width:6px;height:6px}    ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}    .modal-overlay.active{opacity:1;pointer-events:auto}    .modal-box{background:#fff;border-radius:14px;box-shadow:0 25px 50px -12px rgba(0,0,0,.25);max-width:640px;width:95%;max-height:88vh;overflow-y:auto;transform:scale(.95);transition:transform .2s}    .modal-overlay.active .modal-box{transform:scale(1)}    .fab{position:fixed;bottom:24px;right:24px;z-index:150;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 6px 20px rgba(217,119,6,.4);cursor:pointer;transition:transform .2s,box-shadow .2s;border:none}    .fab:hover{transform:scale(1.08);box-shadow:0 8px 25px rgba(217,119,6,.5)}    .fab-menu{position:fixed;bottom:90px;right:24px;z-index:150;background:#fff;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.15);min-width:240px;padding:8px 0;opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .2s,transform .2s}    .fab-menu.open{opacity:1;pointer-events:auto;transform:translateY(0)}    .fab-item{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:.875rem;color:#334155;cursor:pointer;transition:background .15s}    .fab-item:hover{background:#fffbeb}    .rider-card{border:1px solid #e2e8f0;border-radius:12px;padding:16px;transition:box-shadow .15s,transform .15s}    .rider-card:hover{box-shadow:0 4px 15px rgba(0,0,0,.08);transform:translateY(-2px)}    .msg-bubble{max-width:80%;padding:8px 14px;border-radius:12px;font-size:.875rem;line-height:1.4}    .msg-admin{background:#fef3c7;color:#92400e;border-bottom-right-radius:4px;margin-left:auto}    .msg-rider{background:#f1f5f9;color:#334155;border-bottom-left-radius:4px;margin-right:auto}    .input-field{width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:.875rem;outline:none;transition:border .15s,box-shadow .15s}    .input-field:focus{border-color:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.15)}    .btn-amber{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:600;font-size:.875rem;cursor:pointer;transition:opacity .15s}    .btn-amber:hover{opacity:.9}    .btn-outline{background:transparent;border:1px solid #d1d5db;color:#374151;padding:8px 16px;border-radius:8px;font-size:.875rem;cursor:pointer;transition:background .15s}    .btn-outline:hover{background:#f9fafb}    .tab-btn{padding:8px 20px;font-size:.875rem;font-weight:500;border-bottom:2px solid transparent;cursor:pointer;color:#64748b;transition:all .15s}    .tab-btn.active{color:#d97706;border-color:#d97706}    @keyframes anomaahPulse{0%{transform:scale(1);opacity:.65}70%{transform:scale(1.9);opacity:0}100%{transform:scale(1.9);opacity:0}}    .anomaah-tip{background:#0f172a!important;color:#fff!important;border:none!important;border-radius:6px!important;font-size:.72rem!important;font-weight:600!important;padding:3px 9px!important;box-shadow:0 2px 12px rgba(0,0,0,.25)!important;}    .anomaah-tip::before{border-top-color:#0f172a!important;}  </style></head><body class="bg-slate-50 text-slate-800 min-h-screen"><!-- NAVBAR --><nav class="bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-lg sticky top-0 z-50">  <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">    <div class="flex items-center gap-3">      <div class="w-8 h-8 bg-amber-400 rounded-lg flex items-center justify-center font-bold text-sm text-amber-900">A</div>      <span class="font-bold text-lg hidden sm:block tracking-wide">ANOMAAH Fleet</span>    </div>    <div class="flex items-center gap-2 sm:gap-4">      <button onclick="showManageRiders()" class="text-xs sm:text-sm px-3 py-1.5 bg-amber-500 rounded-md hover:bg-amber-400 transition font-medium">👥 Manage Riders</button>      <button onclick="showFleetMap()" class="text-xs sm:text-sm px-3 py-1.5 bg-amber-500 rounded-md hover:bg-amber-400 transition font-medium">🗺️ Fleet Map</button>      <span id="companyName" class="text-xs sm:text-sm text-amber-100 hidden sm:inline">Loading...</span>      <button id="logoutBtn" class="text-xs sm:text-sm px-3 py-1.5 border border-amber-400 rounded-md hover:bg-amber-600 transition">Sign Out</button>    </div>  </div></nav><div class="max-w-7xl mx-auto px-4 sm:px-6 py-6">  <!-- Header -->  <div class="mb-6 flex items-center justify-between flex-wrap gap-4">    <div>      <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">Fleet Dashboard</h1>      <p class="text-sm text-slate-500 mt-1" id="dashSubtitle">Manage your riders and deliveries</p>    </div>    <button onclick="showEnrollRider()" class="btn-amber flex items-center gap-2">➕ Enroll New Rider</button>  </div>  <!-- STAT CARDS -->  <section id="statsSection" class="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8 fade-in">    <div class="skeleton h-24"></div><div class="skeleton h-24"></div><div class="skeleton h-24"></div><div class="skeleton h-24"></div><div class="skeleton h-24"></div>  </section>  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">    <!-- Rider Fleet -->    <section class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden fade-in">      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">        <div><h2 class="font-semibold text-lg">🏍️ Your Riders</h2><p class="text-xs text-slate-400 mt-0.5" id="ridersSubtitle">Fleet roster</p></div>        <button onclick="loadDashboard()" class="text-xs px-3 py-1.5 border border-slate-200 rounded-md hover:bg-slate-50 transition">↻ Refresh</button>      </div>      <div id="ridersGrid" class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">        <div class="skeleton h-24"></div><div class="skeleton h-24"></div>      </div>    </section>    <!-- Side Panel -->    <section class="space-y-4 fade-in">      <!-- Fleet Health -->      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">        <h3 class="font-semibold text-sm text-slate-700 mb-3">Fleet Health</h3>        <div id="fleetHealth" class="space-y-3"><div class="skeleton h-6"></div><div class="skeleton h-6"></div></div>      </div>      <!-- Commission Settings Quick -->      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">        <h3 class="font-semibold text-sm text-slate-700 mb-3">💰 Commission</h3>        <div id="commissionQuick" class="space-y-3"><div class="skeleton h-6"></div></div>      </div>      <!-- Delivery Stats -->      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">        <h3 class="font-semibold text-sm text-slate-700 mb-3">Delivery Stats</h3>        <div id="deliveryStats" class="space-y-3"><div class="skeleton h-6"></div></div>      </div>    </section>    <!-- Orders Table -->    <section class="lg:col-span-3 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden fade-in">      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">        <div><h2 class="font-semibold text-lg">📦 Company Orders</h2><p class="text-xs text-slate-400 mt-0.5" id="ordersSubtitle">Recent deliveries</p></div>      </div>      <div class="overflow-x-auto">        <table class="w-full text-sm"><thead><tr class="bg-amber-50 text-amber-800 text-xs uppercase tracking-wider">          <th class="px-5 py-3 text-left font-medium">ID</th><th class="px-5 py-3 text-left font-medium">Route</th><th class="px-5 py-3 text-left font-medium">Rider</th><th class="px-5 py-3 text-right font-medium">Amount</th><th class="px-5 py-3 text-center font-medium">Status</th><th class="px-5 py-3 text-left font-medium">Created</th>        </tr></thead><tbody id="ordersBody" class="divide-y divide-slate-100"><tr><td colspan="6" class="px-5 py-8 text-center text-slate-400">Loading...</td></tr></tbody></table>      </div>    </section>  </div></div><!-- ===================== MODAL OVERLAY ===================== --><div id="modalOverlay" class="modal-overlay" onclick="if(event.target===this)closeModal()">  <div class="modal-box">    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">      <h3 id="modalTitle" class="font-semibold text-lg text-slate-900"></h3>      <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 text-xl">&times;</button>    </div>    <div id="modalBody" class="px-6 py-4"></div>  </div></div><!-- FLEET MAP MODAL --><div id="mapModal" style="display:none;position:fixed;inset:0;z-index:300;background:#fff;flex-direction:column;">  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;flex-shrink:0;">    <div style="display:flex;align-items:center;gap:10px;">      <span style="font-size:1.1rem;font-weight:700;">🗺️ Live Fleet Map</span>      <span id="mapRiderCount" style="font-size:0.75rem;background:rgba(255,255,255,0.2);padding:2px 10px;border-radius:9999px;"></span>    </div>    <div style="display:flex;gap:8px;">      <button onclick="loadFleetMapRiders()" style="font-size:0.75rem;padding:5px 14px;background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:6px;cursor:pointer;">↻ Refresh</button>      <button onclick="closeFleetMap()" style="font-size:0.75rem;padding:5px 14px;background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:6px;cursor:pointer;">✕ Close</button>    </div>  </div>  <div style="display:flex;flex:1;overflow:hidden;min-height:0;">    <div style="width:260px;min-width:200px;border-right:1px solid #e2e8f0;overflow-y:auto;background:#fff;flex-shrink:0;">      <div style="padding:8px 12px;border-bottom:1px solid #f1f5f9;font-size:0.7rem;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;background:#f8fafc;">Your Riders</div>      <div id="riderListItems"></div>    </div>    <div style="flex:1;position:relative;overflow:hidden;min-width:0;">      <div id="fleetMap" style="width:100%;height:100%;"></div>      <div id="trackingPanel" style="display:none;position:absolute;bottom:0;left:0;right:0;background:#fff;border-top:2px solid #f59e0b;padding:12px 16px;z-index:400;box-shadow:0 -4px 20px rgba(0,0,0,.08);">        <div style="display:flex;align-items:center;gap:12px;justify-content:space-between;">          <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">            <div id="trackingRiderAvatar" style="width:38px;height:38px;border-radius:50%;background:#f59e0b;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1rem;flex-shrink:0;"></div>            <div style="min-width:0;">              <div id="trackingRiderName" style="font-weight:700;font-size:0.9rem;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>              <div id="trackingStatus" style="font-size:0.72rem;font-weight:600;"></div>            </div>          </div>          <div style="display:flex;gap:20px;flex-shrink:0;">            <div style="text-align:center;"><div id="trackingCoords" style="font-size:0.7rem;font-family:monospace;color:#334155;font-weight:600;"></div><div style="font-size:0.62rem;color:#94a3b8;margin-top:1px;">GPS</div></div>            <div style="text-align:center;"><div id="trackingEta" style="font-size:1rem;font-weight:800;color:#d97706;">—</div><div style="font-size:0.62rem;color:#94a3b8;">ETA</div></div>            <div style="text-align:center;"><div id="trackingOrderStatus" style="font-size:0.72rem;font-weight:600;color:#334155;">—</div><div style="font-size:0.62rem;color:#94a3b8;">Status</div></div>          </div>          <button onclick="document.getElementById('trackingPanel').style.display='none';if(_trackingInterval){clearInterval(_trackingInterval);_trackingInterval=null;}" style="color:#94a3b8;font-size:1.1rem;cursor:pointer;background:none;border:none;padding:4px;flex-shrink:0;line-height:1;">✕</button>        </div>      </div>    </div>  </div></div><!-- FAB + MENU --><button class="fab" id="fabBtn" onclick="toggleFab()">⚡</button><div class="fab-menu" id="fabMenu">  <div class="px-4 py-2 text-xs text-slate-400 uppercase tracking-wider font-semibold">Fleet Actions</div>  <div class="fab-item" onclick="showEnrollRider();closeFab()">➕ Enroll New Rider</div>  <div class="fab-item" onclick="showManageRiders();closeFab()">👥 Manage Riders</div>  <div class="fab-item" onclick="showFleetMap();closeFab()">🗺️ Fleet Map</div>  <div class="fab-item" onclick="showRevenueModal();closeFab()">💰 Revenue &amp; Withdrawals</div>  <div class="fab-item" onclick="loadDashboard();closeFab()">🔄 Refresh Data</div>  <div class="h-px bg-slate-100 my-1"></div>  <div class="fab-item text-rose-600" onclick="doLogout()">🚪 Sign Out</div></div><!-- TOAST --><div id="toast" class="fixed bottom-6 left-6 bg-slate-900 text-white px-5 py-3 rounded-lg shadow-lg text-sm hidden z-[300] transition-all"><span id="toastMsg"></span></div><script>/* ══════════════════════ HELPERS ══════════════════════ */function toast(msg,type){const el=document.getElementById('toast'),m=document.getElementById('toastMsg');m.textContent=msg;el.className='fixed bottom-6 left-6 text-white px-5 py-3 rounded-lg shadow-lg text-sm z-[300]';el.classList.add(type==='error'?'bg-rose-600':type==='success'?'bg-emerald-600':'bg-slate-900');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.add('hidden'),3500)}function statusBadge(s){const c={PENDING:'bg-amber-100 text-amber-700',ASSIGNED:'bg-blue-100 text-blue-700',IN_TRANSIT:'bg-indigo-100 text-indigo-700',DELIVERED:'bg-emerald-100 text-emerald-700',CANCELLED:'bg-rose-100 text-rose-700'};return '<span class="status-badge '+(c[s]||'bg-slate-100 text-slate-600')+'">'+s+'</span>'}function riderStatusBadge(r){if(r.is_banned)return '<span class="status-badge bg-rose-100 text-rose-700">BANNED</span>';if(r.is_suspended)return '<span class="status-badge bg-orange-100 text-orange-700">SUSPENDED</span>';const s=(r.status||'offline').toLowerCase();const c=s==='online'?'bg-emerald-100 text-emerald-700':'bg-slate-100 text-slate-500';return '<span class="status-badge '+c+'">'+s+'</span>'}function timeAgo(dt){if(!dt)return'\u2014';const d=new Date(dt),diff=(Date.now()-d.getTime())/1000;if(diff<60)return'just now';if(diff<3600)return Math.floor(diff/60)+'m ago';if(diff<86400)return Math.floor(diff/3600)+'h ago';return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}function shortId(id){return id?id.substring(0,8):'\u2014'}async function api(method,path,body){  const opts={method,headers:{}};  if(body){opts.headers['Content-Type']='application/json';opts.body=JSON.stringify(body)}  const r=await fetch('/api'+path,opts);  if(r.status===401||r.status===403){window.location.href='/static/login.html';return null}  return r;}async function apiGet(path){const r=await api('GET',path);if(!r||!r.ok)return null;return r.json()}async function apiPost(path,body){return api('POST',path,body)}/* ══════════════════════ AUTH ══════════════════════ */document.getElementById('logoutBtn').onclick=()=>doLogout();async function doLogout(){await fetch('/api/logout',{method:'POST'});toast('Signed out');setTimeout(()=>window.location.href='/static/login.html',500)}/* ══════════════════════ MODAL ══════════════════════ */function openModal(title,html){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=html;document.getElementById('modalOverlay').classList.add('active')}function closeModal(){document.getElementById('modalOverlay').classList.remove('active')}document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});/* ══════════════════════ FAB ══════════════════════ */let fabOpen=false;function toggleFab(){fabOpen=!fabOpen;document.getElementById('fabMenu').classList.toggle('open',fabOpen);document.getElementById('fabBtn').textContent=fabOpen?'✕':'⚡'}function closeFab(){fabOpen=false;document.getElementById('fabMenu').classList.remove('open');document.getElementById('fabBtn').textContent='⚡'}document.addEventListener('click',e=>{if(fabOpen&&!e.target.closest('.fab')&&!e.target.closest('.fab-menu'))closeFab()});/* ══════════════════════ ENROLL RIDER MODAL ══════════════════════ */function showEnrollRider(){  let html = `  <form id="enrollForm" class="space-y-4">    <div><label class="block text-sm font-medium text-slate-700 mb-1">Full Name <span class="text-rose-500">*</span></label>      <input name="full_name" class="input-field" placeholder="Kofi Mensah" required oninput="autoUsername(this)"/></div>    <div><label class="block text-sm font-medium text-slate-700 mb-1">Phone Number <span class="text-rose-500">*</span></label>      <input name="phone" class="input-field" placeholder="+233 XX XXX XXXX" required/></div>    <div><label class="block text-sm font-medium text-slate-700 mb-1">Username <span class="text-rose-500">*</span></label>      <input name="username" id="enrollUsername" class="input-field" placeholder="rider_kofi_m" required/>      <p class="text-xs text-slate-400 mt-1">Auto-suggested from name. A 5-digit passcode will be auto-generated.</p></div>    <div><label class="block text-sm font-medium text-slate-700 mb-1">Motorbike Registration # <span class="text-rose-500">*</span></label>      <input name="bike_id" class="input-field" placeholder="GR-1234-22" required/></div>    <div><label class="block text-sm font-medium text-slate-700 mb-1">ID / License Upload <span class="text-rose-500">*</span></label>      <div id="uploadZone" class="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:border-amber-400 transition cursor-pointer" onclick="document.getElementById('licenseInput').click()">        <input type="file" id="licenseInput" accept="image/*,.pdf" class="hidden" onchange="handleFileUpload(this)"/>        <div id="uploadLabel" class="text-sm text-slate-500">📎 Click to upload ID or License<br><span class="text-xs text-slate-400">JPG, PNG, PDF — Max 5MB</span></div>      </div></div>    <button type="submit" class="btn-amber w-full py-3 text-base">Enroll Rider</button>  </form>`;  openModal('➕ Enroll New Rider', html);  window._uploadedLicense = null;  document.getElementById('enrollForm').onsubmit = async(e)=>{    e.preventDefault();    const f = new FormData(e.target);    const licenseDoc = window._uploadedLicense;    if(!licenseDoc){toast('Please upload ID or license document','error');return}    const btn = e.target.querySelector('button[type=submit]');    btn.disabled=true; btn.textContent='Enrolling...';    const body = {      full_name: f.get('full_name'),      phone: f.get('phone'),      username: f.get('username'),      bike_id: f.get('bike_id'),      license_doc: licenseDoc,    };    try {      const r = await apiPost('/company/riders/enroll', body);      const d = await r.json();      if(r.ok && d.ok){        closeModal();        openModal('✅ Rider Enrolled!', `          <div class="text-center space-y-4 py-2">            <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto text-3xl">🏍️</div>            <p class="text-slate-600"><strong>${d.full_name}</strong> has been enrolled. Share these login details:</p>            <div class="bg-slate-50 rounded-lg p-4 text-left space-y-2">              <div class="flex justify-between items-center"><span class="text-sm text-slate-500">Phone Number</span><span class="font-mono font-bold text-slate-800">${d.phone}</span></div>              <div class="flex justify-between items-center"><span class="text-sm text-slate-500">5-Digit Passcode</span><span class="font-mono font-bold text-2xl text-amber-700 tracking-widest">${d.passcode}</span></div>            </div>            <button onclick="copyCredentials('${d.phone}','${d.passcode}')" class="btn-amber w-full">📋 Copy Login Details</button>            <p class="text-xs text-slate-400">⚠️ Share phone + passcode with rider. They can change passcode after first login.</p>          </div>`);        loadDashboard();      } else {        toast(d.detail || 'Enrollment failed','error');        btn.disabled=false; btn.textContent='Enroll Rider';      }    } catch(err){toast('Network error','error'); btn.disabled=false; btn.textContent='Enroll Rider';}  };}function autoUsername(el){  const name = el.value.trim().toLowerCase().replace(/[^a-z\s]/g,'').split(/\s+/).filter(Boolean);  if(name.length>=2){    document.getElementById('enrollUsername').value = 'rider_' + name[0] + '_' + name[1][0];  } else if(name.length===1){    document.getElementById('enrollUsername').value = 'rider_' + name[0];  }
+}
+
+window._uploadedLicense = null;
+function handleFileUpload(input){
+  const file = input.files[0];
+  if(!file) return;
+  if(file.size > 5*1024*1024){toast('File too large (max 5MB)','error');return}
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    window._uploadedLicense = reader.result;
+    document.getElementById('uploadLabel').innerHTML = '✅ <strong>'+file.name+'</strong> uploaded<br><span class="text-xs text-slate-400">Click to change</span>';
+    document.getElementById('uploadZone').classList.remove('border-slate-300');
+    document.getElementById('uploadZone').classList.add('border-emerald-400','bg-emerald-50');
+  };
+  reader.readAsDataURL(file);
+}
+
+function copyCredentials(u,p){navigator.clipboard.writeText('Phone: '+u+'\nPasscode: '+p);toast('Login details copied!','success')}
+
+/* ══════════════════════ MANAGE RIDERS MODAL ══════════════════════ */
+async function showManageRiders(){
+  openModal('👥 Manage Riders','<div class="text-center py-8"><div class="skeleton h-8 w-48 mx-auto mb-4"></div><p class="text-slate-400">Loading riders...</p></div>');
+  const riders = await apiGet('/company/riders');
+  if(!riders || !riders.length){
+    document.getElementById('modalBody').innerHTML = '<div class="text-center py-8 text-slate-400">No riders enrolled yet. Enroll your first rider!</div>';
+    return;
+  }
+  let html = '<div class="space-y-3">';
+  for(const r of riders){
+    const statusHtml = riderStatusBadge(r);
+    const isActive = !r.is_suspended && !r.is_banned;
+    const safeName = (r.full_name||r.username||'Rider').replace(/'/g,"\\'");
+    html += `
+    <div class="border border-slate-200 rounded-xl p-4 hover:shadow-md transition">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${isActive?'bg-amber-500':'bg-slate-400'}">${(r.full_name||r.username||'R')[0].toUpperCase()}</div>
+        <div class="flex-1 min-w-0">
+          <div class="font-medium text-sm text-slate-800 truncate">${r.full_name||r.username}</div>
+          <div class="text-xs text-slate-400">${r.phone||''} · 🏍️ ${r.bike_id||'No bike'}</div>
+        </div>
+        ${statusHtml}
+      </div>
+      <div class="grid grid-cols-3 gap-2 text-center mb-3">
+        <div class="bg-slate-50 rounded-md p-1.5"><div class="text-sm font-bold">${r.completed_orders||0}</div><div class="text-[10px] text-slate-400">Completed</div></div>
+        <div class="bg-slate-50 rounded-md p-1.5"><div class="text-sm font-bold">⭐ ${(r.avg_rating||0).toFixed(1)}</div><div class="text-[10px] text-slate-400">Rating</div></div>
+        <div class="bg-slate-50 rounded-md p-1.5"><div class="text-sm font-bold">GH₵${(r.total_earnings||0).toFixed(0)}</div><div class="text-[10px] text-slate-400">Earned</div></div>
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        ${isActive
+          ? `<button onclick="riderAction('${r.user_id}','suspend')" class="text-xs px-3 py-1.5 bg-orange-50 text-orange-700 border border-orange-200 rounded-md hover:bg-orange-100 transition">⏸ Suspend</button>
+             <button onclick="riderAction('${r.user_id}','ban')" class="text-xs px-3 py-1.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-md hover:bg-rose-100 transition">🚫 Ban</button>`
+          : `<button onclick="riderAction('${r.user_id}','reactivate')" class="text-xs px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md hover:bg-emerald-100 transition">✅ Reactivate</button>`
+        }
+        <button onclick="showMessageModal('${r.user_id}','${safeName}')" class="text-xs px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 transition">💬 Message</button>
+        ${r.has_license ? '<span class="text-xs px-2 py-1.5 text-emerald-600">📄 ID on file</span>' : '<span class="text-xs px-2 py-1.5 text-slate-400">⚠️ No ID</span>'}
+      </div>
+    </div>`;
+  }
+  html += '</div>';
+  document.getElementById('modalBody').innerHTML = html;
+}
+
+async function riderAction(userId, action){
+  const r = await apiPost(`/company/riders/${userId}/${action}`, {});
+  if(r && r.ok){
+    toast(`Rider ${action}d successfully`,'success');
+    showManageRiders();
+  } else {
+    const d = await r.json().catch(()=>({}));
+    toast(d.detail||`Failed to ${action} rider`,'error');
+  }
+}
+
+/* ══════════════════════ MESSAGE MODAL ══════════════════════ */
+async function showMessageModal(userId, name){
+  openModal('💬 Chat with ' + name, '<div class="text-center py-4 text-slate-400">Loading messages...</div>');
+  const msgs = await apiGet(`/company/riders/${userId}/messages`);
+  let html = `<div id="chatMessages" class="space-y-2 max-h-[40vh] overflow-y-auto p-3 bg-slate-50 rounded-lg mb-4" style="min-height:120px">`;
+  if(!msgs || !msgs.length){
+    html += '<div class="text-center text-slate-400 text-sm py-8">No messages yet. Start a conversation!</div>';
+  } else {
+    for(const m of msgs){
+      const cls = m.sender==='admin' ? 'msg-admin' : 'msg-rider';
+      const time = m.created_at ? new Date(m.created_at).toLocaleString('en-GB',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'}) : '';
+      html += `<div class="flex ${m.sender==='admin'?'justify-end':'justify-start'}"><div class="msg-bubble ${cls}">${m.content}${m.is_alert?' 🔔':''}<div class="text-[10px] opacity-60 mt-1">${time}</div></div></div>`;
+    }
+  }
+  html += `</div>
+  <form id="msgForm" class="flex gap-2 items-end">
+    <input name="message" class="input-field flex-1" placeholder="Type a message..." required autocomplete="off"/>
+    <label class="flex items-center gap-1 text-xs text-slate-500 cursor-pointer whitespace-nowrap" title="Send as alert"><input type="checkbox" name="is_alert" class="accent-amber-500"/> 🔔</label>
+    <button type="submit" class="btn-amber px-4 py-2">Send</button>
+  </form>`;
+  document.getElementById('modalBody').innerHTML = html;
+
+  const chatEl = document.getElementById('chatMessages');
+  chatEl.scrollTop = chatEl.scrollHeight;
+
+  document.getElementById('msgForm').onsubmit = async(e)=>{
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const msg = f.get('message').trim();
+    if(!msg) return;
+    const isAlert = !!e.target.querySelector('[name=is_alert]').checked;
+    const r = await apiPost(`/company/riders/${userId}/message`, {message: msg, is_alert: isAlert});
+    if(r && r.ok){
+      e.target.reset();
+      showMessageModal(userId, name);
+    } else {
+      toast('Failed to send message','error');
+    }
+  };
+}
+
+/* ══════════════════════ REVENUE / BALANCE MODAL ══════════════════════ */
+async function showRevenueModal(){
+  openModal('💰 Revenue & Withdrawals', '<div class="text-center py-8"><div class="skeleton h-8 w-48 mx-auto mb-4"></div><p class="text-slate-400">Loading financial data...</p></div>');
+  const data = await apiGet('/company/revenue');
+  if(!data){document.getElementById('modalBody').innerHTML='<div class="text-center py-8 text-slate-400">Failed to load revenue data</div>';return}
+
+  const payoutsHtml = data.payouts && data.payouts.length
+    ? '<div class="mt-4"><h4 class="text-sm font-medium text-slate-700 mb-2">Recent Withdrawals</h4><div class="space-y-2 max-h-40 overflow-y-auto">'
+      + data.payouts.map(p=>'<div class="flex justify-between text-sm p-2 bg-slate-50 rounded"><span>GH₵'+p.amount+'</span><span class="status-badge '+(p.status==='COMPLETED'?'bg-emerald-100 text-emerald-700':'bg-amber-100 text-amber-700')+'">'+p.status+'</span></div>').join('')
+      + '</div></div>'
+    : '';
+
+  const paymentsHtml = data.payments && data.payments.length
+    ? data.payments.map(t=>'<div class="flex justify-between text-sm p-2 bg-slate-50 rounded"><span>GH₵'+(t.amount||0).toFixed(2)+'</span><span class="text-xs text-slate-400">'+(t.type||'payment')+'</span></div>').join('')
+    : '<div class="text-center py-8 text-slate-400 text-sm">No payment records yet</div>';
+
+  let html = `
+  <div class="bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl p-5 text-white mb-6">
+    <div class="text-sm opacity-80 mb-1">Available Balance</div>
+    <div class="text-3xl font-bold">GH₵${(data.balance||0).toLocaleString(undefined,{minimumFractionDigits:2})}</div>
+    <div class="flex gap-4 mt-3 text-sm flex-wrap">
+      <div><span class="opacity-70">Revenue:</span> GH₵${(data.total_revenue||0).toFixed(2)}</div>
+      <div><span class="opacity-70">Withdrawn:</span> GH₵${(data.total_payouts||0).toFixed(2)}</div>
+      <div><span class="opacity-70">Commission:</span> ${data.commission_pct||15}%</div>
+    </div>
+  </div>
+
+  <div class="flex border-b border-slate-200 mb-4">
+    <div class="tab-btn active" onclick="revTab(this,'withdraw')">💸 Withdraw</div>
+    <div class="tab-btn" onclick="revTab(this,'payments')">📥 Payments</div>
+    <div class="tab-btn" onclick="revTab(this,'commission')">⚙️ Commission</div>
+  </div>
+
+  <div id="tab-withdraw">
+    <form id="withdrawForm" class="space-y-4">
+      <div><label class="block text-sm font-medium text-slate-700 mb-1">Amount (GH₵)</label>
+        <input name="amount" type="number" step="0.01" min="1" class="input-field" placeholder="100.00" required/></div>
+      <div><label class="block text-sm font-medium text-slate-700 mb-1">Schedule</label>
+        <select name="schedule" class="input-field">
+          <option value="immediate">Immediate</option>
+          <option value="3day">Within 3 Days</option>
+          <option value="weekly">Weekly (Auto)</option>
+        </select>
+        <p class="text-xs text-slate-400 mt-1">Processed via Hubtel. Funds sent to your registered MoMo.</p></div>
+      <button type="submit" class="btn-amber w-full">💸 Request Withdrawal</button>
+    </form>
+    ${payoutsHtml}
+  </div>
+
+  <div id="tab-payments" class="hidden">
+    <div class="space-y-2 max-h-60 overflow-y-auto">${paymentsHtml}</div>
+  </div>
+
+  <div id="tab-commission" class="hidden">
+    <div class="space-y-4">
+      <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <p class="text-sm text-amber-800 mb-2">Current commission: <strong>${data.commission_pct||15}%</strong> kept by company.</p>
+        <p class="text-sm text-amber-700">Riders receive <strong>${100-(data.commission_pct||15)}%</strong> of each delivery fee.</p>
+      </div>
+      <form id="commissionForm" class="space-y-3">
+        <div><label class="block text-sm font-medium text-slate-700 mb-1">Company Commission (%)</label>
+          <input name="commission_pct" type="number" step="0.5" min="0" max="100" class="input-field" value="${data.commission_pct||15}" required/>
+          <p class="text-xs text-slate-400 mt-1">Rider gets the remaining percentage from each delivery fee.</p></div>
+        <button type="submit" class="btn-amber w-full">💾 Save Commission Rate</button>
+      </form>
+    </div>
+  </div>`;
+
+  document.getElementById('modalBody').innerHTML = html;
+
+  document.getElementById('withdrawForm').onsubmit = async(e)=>{
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const btn = e.target.querySelector('button[type=submit]');
+    btn.disabled=true; btn.textContent='Processing...';
+    const r = await apiPost('/company/withdraw', {amount: parseFloat(f.get('amount')), schedule: f.get('schedule')});
+    if(r && r.ok){
+      toast('Withdrawal requested! Hubtel will process it.','success');
+      showRevenueModal();
+    } else {
+      const d = await r.json().catch(()=>({}));
+      toast(d.detail||'Withdrawal failed','error');
+      btn.disabled=false; btn.textContent='💸 Request Withdrawal';
+    }
+  };
+
+  document.getElementById('commissionForm').onsubmit = async(e)=>{
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const r = await apiPost('/company/commission', {commission_pct: parseFloat(f.get('commission_pct'))});
+    if(r && r.ok){
+      toast('Commission rate updated!','success');
+      loadDashboard();
+    } else {
+      toast('Failed to update commission','error');
+    }
+  };
+}
+
+function revTab(el, tab){
+  el.parentElement.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  ['withdraw','payments','commission'].forEach(t=>{
+    const div = document.getElementById('tab-'+t);
+    if(div) div.classList.toggle('hidden', t!==tab);
+  });
+}
+
+/* ══════════════════════ DASHBOARD LOAD ══════════════════════ */
+let _dashData = null;
+async function loadDashboard(){
+  const data = await apiGet('/company/dashboard_v2');
+  if(!data){
+    document.getElementById('statsSection').innerHTML='<div class="col-span-full text-center py-8"><p class="text-slate-500 mb-3">Please sign in as a company admin</p><a href="/static/login.html" class="text-amber-600 font-medium hover:underline">→ Sign in</a></div>';
+    return;
+  }
+  _dashData = data;
+
+  document.getElementById('companyName').textContent = '● ' + (data.company_name || 'My Company');
+  document.getElementById('dashSubtitle').textContent = (data.company_name||'Company') + ' — ' + (data.total_riders||0) + ' riders, ' + (data.total_orders||0) + ' orders';
+
+  // 5 stat cards
+  const stats=[
+    {label:'Total Riders',value:data.total_riders||0,icon:'🏍️',bg:'bg-amber-50 border-amber-200',click:'showManageRiders()'},
+    {label:'Active Orders',value:data.active_orders||0,icon:'📦',bg:'bg-blue-50 border-blue-200'},
+    {label:'Completed',value:data.completed_orders||0,icon:'✅',bg:'bg-emerald-50 border-emerald-200'},
+    {label:'Revenue',value:'GH₵'+(data.total_revenue||0).toLocaleString(undefined,{minimumFractionDigits:2}),icon:'💰',bg:'bg-rose-50 border-rose-200',click:'showRevenueModal()'},
+    {label:'Balance',value:'GH₵'+(data.balance||0).toLocaleString(undefined,{minimumFractionDigits:2}),icon:'🏦',bg:'bg-purple-50 border-purple-200',click:'showRevenueModal()'},
+  ];
+  document.getElementById('statsSection').innerHTML = stats.map(s=>`<div class="stat-card ${s.bg} rounded-xl border p-4" ${s.click?'onclick="'+s.click+'"':''}><div class="text-xl mb-1">${s.icon}</div><div class="text-2xl font-bold text-slate-900">${s.value}</div><div class="text-xs text-slate-500 mt-1">${s.label}</div></div>`).join('');
+
+  // Riders Grid
+  const ridersEl = document.getElementById('ridersGrid');
+  const ridersSub = document.getElementById('ridersSubtitle');
+  const riders = data.riders || [];
+  const online = riders.filter(r=>(r.status||'').toLowerCase()==='online').length;
+  ridersSub.textContent = riders.length + ' riders • ' + online + ' online';
+
+  if(!riders.length){
+    ridersEl.innerHTML = '<div class="col-span-full text-center py-8 text-slate-400">No riders enrolled yet. Click "Enroll New Rider" to get started!</div>';
+  } else {
+    ridersEl.innerHTML = riders.map(r=>{
+      const isOnline = (r.status||'').toLowerCase() === 'online';
+      const isActive = !r.is_suspended && !r.is_banned;
+      return `<div class="rider-card bg-white">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${isOnline?'bg-emerald-500':isActive?'bg-amber-400':'bg-slate-400'}">${(r.full_name||r.username||'R')[0].toUpperCase()}</div>
+          <div class="flex-1 min-w-0">
+            <div class="font-medium text-sm text-slate-800 truncate">${r.full_name||r.username||'Rider'}</div>
+            <div class="text-xs text-slate-400">🏍️ ${r.bike_id||'—'} · ${r.phone||''}</div>
+          </div>
+          ${riderStatusBadge(r)}
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-slate-50 rounded-md p-1.5"><div class="text-sm font-bold text-slate-800">${r.completed_orders||0}</div><div class="text-[10px] text-slate-400">Done</div></div>
+          <div class="bg-slate-50 rounded-md p-1.5"><div class="text-sm font-bold text-slate-800">⭐${(r.avg_rating||0).toFixed(1)}</div><div class="text-[10px] text-slate-400">Rating</div></div>
+          <div class="bg-slate-50 rounded-md p-1.5"><div class="text-sm font-bold text-slate-800">${r.total_earnings||0}</div><div class="text-[10px] text-slate-400">Earned</div></div>
+        </div>
+        ${isOnline ? `<button onclick="showFleetMap('${r.rider_id}')" class="mt-2 w-full text-xs px-2 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md hover:bg-emerald-100 transition font-medium">📍 Track Live</button>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  // Fleet Health
+  const fh = document.getElementById('fleetHealth');
+  const onlinePct = riders.length ? Math.round((online/riders.length)*100) : 0;
+  const suspended = riders.filter(r=>r.is_suspended).length;
+  const banned = riders.filter(r=>r.is_banned).length;
+  fh.innerHTML = `
+    <div class="flex items-center justify-between text-sm"><span class="text-slate-600">Online Rate</span><span class="font-bold text-emerald-600">${onlinePct}%</span></div>
+    <div class="w-full bg-slate-100 rounded-full h-2 mt-1"><div class="bg-amber-500 h-2 rounded-full" style="width:${onlinePct}%"></div></div>
+    <div class="flex items-center justify-between text-sm mt-3"><span class="text-slate-600">Online</span><span class="font-bold">${online}</span></div>
+    <div class="flex items-center justify-between text-sm"><span class="text-slate-600">Offline</span><span class="font-bold">${riders.length-online-suspended-banned}</span></div>
+    ${suspended?'<div class="flex items-center justify-between text-sm"><span class="text-orange-600">Suspended</span><span class="font-bold text-orange-600">'+suspended+'</span></div>':''}
+    ${banned?'<div class="flex items-center justify-between text-sm"><span class="text-rose-600">Banned</span><span class="font-bold text-rose-600">'+banned+'</span></div>':''}
+    <div class="flex items-center justify-between text-sm"><span class="text-slate-600">Total Fleet</span><span class="font-bold">${riders.length}</span></div>`;
+
+  // Commission Quick
+  const cq = document.getElementById('commissionQuick');
+  const commPct = data.commission_pct || 15;
+  cq.innerHTML = `
+    <div class="flex items-center justify-between text-sm"><span class="text-slate-600">Company Keeps</span><span class="font-bold text-amber-600">${commPct}%</span></div>
+    <div class="flex items-center justify-between text-sm"><span class="text-slate-600">Rider Gets</span><span class="font-bold text-emerald-600">${100-commPct}%</span></div>
+    <button onclick="showRevenueModal()" class="text-xs text-amber-600 hover:underline mt-1">Edit commission →</button>`;
+
+  // Delivery Stats
+  const ds = document.getElementById('deliveryStats');
+  const totalOrders = data.total_orders || 0;
+  const completionRate = totalOrders ? Math.round(((data.completed_orders||0)/totalOrders)*100) : 0;
+  ds.innerHTML = `
+    <div class="flex items-center justify-between text-sm"><span class="text-slate-600">Completion Rate</span><span class="font-bold text-blue-600">${completionRate}%</span></div>
+    <div class="w-full bg-slate-100 rounded-full h-2 mt-1"><div class="bg-blue-500 h-2 rounded-full" style="width:${completionRate}%"></div></div>
+    <div class="flex items-center justify-between text-sm mt-3"><span class="text-slate-600">Total Orders</span><span class="font-bold">${totalOrders}</span></div>
+    <div class="flex items-center justify-between text-sm"><span class="text-slate-600">Active</span><span class="font-bold text-amber-600">${data.active_orders||0}</span></div>
+    <div class="flex items-center justify-between text-sm"><span class="text-slate-600">Revenue</span><span class="font-bold text-emerald-600">GH₵${(data.total_revenue||0).toFixed(2)}</span></div>`;
+
+  // Orders Table
+  const orders = data.orders || [];
+  const tbody = document.getElementById('ordersBody');
+  const ordersSub = document.getElementById('ordersSubtitle');
+  ordersSub.textContent = orders.length + ' orders • GH₵' + (data.total_revenue||0).toFixed(2) + ' revenue';
+  if(!orders.length){
+    tbody.innerHTML = '<tr><td colspan="6" class="px-5 py-8 text-center text-slate-400">No orders yet</td></tr>';
+  } else {
+    tbody.innerHTML = orders.slice(0,20).map(o=>`<tr class="table-row">
+      <td class="px-5 py-3 font-mono text-xs text-slate-600">${shortId(o.id)}</td>
+      <td class="px-5 py-3"><div class="text-xs font-medium text-slate-800 truncate max-w-[180px]">${o.pickup_address||'—'}</div><div class="text-xs text-slate-400 truncate max-w-[180px]">→ ${o.dropoff_address||'—'}</div></td>
+      <td class="px-5 py-3 text-sm text-slate-600">${o.rider_name||'—'}</td>
+      <td class="px-5 py-3 text-right font-medium">GH₵${(o.price_ghs||0).toFixed(2)}</td>
+      <td class="px-5 py-3 text-center">${statusBadge(o.status)}</td>
+      <td class="px-5 py-3 text-xs text-slate-500">${timeAgo(o.created_at)}</td>
+    </tr>`).join('');
+  }
+}
+
+/* ══════════════════════ FLEET MAP ══════════════════════ */
+let _fleetMap = null;
+let _fleetMarkers = {};
+let _selectedRiderId = null;
+let _trackingInterval = null;
+let _pendingSelectRiderId = null;
+let _mapRidersData = {};
+let _riderEtaText = {};
+
+function _makeRiderIcon(initial, color, isOnline, etaText) {
+  const pulse = isOnline
+    ? `<div style="position:absolute;inset:-8px;border-radius:50%;border:2.5px solid ${color};animation:anomaahPulse 1.8s ease-out infinite;pointer-events:none;"></div>`
+    : '';
+  const pill = (isOnline && etaText)
+    ? `<div style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);white-space:nowrap;background:${color};color:#fff;font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:9999px;box-shadow:0 2px 8px rgba(217,119,6,.35);pointer-events:none;letter-spacing:.03em;border:1px solid rgba(255,255,255,.35);">${etaText}</div>`
+    : '';
+  const body = `<div style="position:relative;z-index:1;width:36px;height:36px;background:${color};border:2.5px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:.85rem;box-shadow:0 3px 14px rgba(0,0,0,.14);cursor:pointer;">${initial}</div>`;
+  return L.divIcon({ html: `<div style="position:relative;width:36px;height:36px;">${pulse}${pill}${body}</div>`, iconSize:[36,36], iconAnchor:[18,18], className:'' });
+}
+
+function _smoothMoveTo(marker, lat, lng, ms) {
+  const from = marker.getLatLng();
+  const sLat = from.lat, sLng = from.lng;
+  const t0 = performance.now();
+  function step(now) {
+    const p = Math.min((now-t0)/ms, 1);
+    const e = 1-Math.pow(1-p, 3);
+    marker.setLatLng([sLat+(lat-sLat)*e, sLng+(lng-sLng)*e]);
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function showFleetMap(focusRiderId) {
+  _pendingSelectRiderId = focusRiderId || null;
+  const modal = document.getElementById('mapModal');
+  modal.style.display = 'flex';
+  if (!_fleetMap) {
+    _fleetMap = L.map('fleetMap', { zoomControl: true }).setView([5.6037, -0.1870], 13);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · © <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd', maxZoom: 19
+    }).addTo(_fleetMap);
+  }
+  setTimeout(() => { _fleetMap.invalidateSize(); }, 150);
+  loadFleetMapRiders();
+}
+
+function closeFleetMap() {
+  document.getElementById('mapModal').style.display = 'none';
+  if (_trackingInterval) { clearInterval(_trackingInterval); _trackingInterval = null; }
+  _selectedRiderId = null;
+}
+
+async function loadFleetMapRiders() {
+  const riders = await apiGet('/company/riders');
+  if (!riders) return;
+  _mapRidersData = {};
+  riders.forEach(r => { _mapRidersData[r.rider_id] = r; });
+  const list = document.getElementById('riderListItems');
+  list.innerHTML = '';
+  Object.values(_fleetMarkers).forEach(m => _fleetMap.removeLayer(m));
+  _fleetMarkers = {};
+  const bounds = [];
+  for (const r of riders) {
+    const isOnline = (r.status||'').toLowerCase()==='online';
+    const isBreak = (r.status||'').toLowerCase()==='break';
+    const color = isOnline ? '#f59e0b' : isBreak ? '#fb923c' : '#94a3b8';
+    const name = r.full_name || r.username || 'Rider';
+    const initial = name[0].toUpperCase();
+    // Sidebar item
+    const item = document.createElement('div');
+    item.id = `rli-${r.rider_id}`;
+    item.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;transition:background .15s;';
+    item.innerHTML = `
+      <div style="position:relative;flex-shrink:0;">
+        <div style="width:34px;height:34px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.85rem;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.1);">${initial}</div>
+        ${isOnline?'<div style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:#22c55e;border:2px solid #fff;"></div>':''}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:.875rem;font-weight:600;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
+        <div style="font-size:.7rem;color:#94a3b8;">${isOnline?'🟢 Online':isBreak?'🟡 Break':'⚫ Offline'} · ${r.completed_orders||0} trips · ⭐${(r.avg_rating||0).toFixed(1)}</div>
+      </div>
+      ${isOnline?'<span style="font-size:.62rem;padding:2px 7px;background:#fef3c7;color:#d97706;border-radius:9999px;font-weight:700;border:1px solid #fde68a;flex-shrink:0;">LIVE</span>':''}
+    `;
+    item.onmouseenter=()=>{ if(_selectedRiderId!==r.rider_id) item.style.background='#fffbeb'; };
+    item.onmouseleave=()=>{ if(_selectedRiderId!==r.rider_id) item.style.background=''; };
+    item.onclick=()=>selectRider(r);
+    list.appendChild(item);
+    // Map marker
+    if (r.current_lat && r.current_lng) {
+      const icon = _makeRiderIcon(initial, color, isOnline, _riderEtaText[r.rider_id]||'');
+      const marker = L.marker([r.current_lat, r.current_lng], {icon})
+        .addTo(_fleetMap)
+        .bindTooltip(name, {permanent:false, direction:'top', offset:[0,-22], className:'anomaah-tip'});
+      marker.on('click', ()=>selectRider(r));
+      _fleetMarkers[r.rider_id] = marker;
+      bounds.push([r.current_lat, r.current_lng]);
+    }
+  }
+  const online = riders.filter(r=>(r.status||'').toLowerCase()==='online').length;
+  document.getElementById('mapRiderCount').textContent = `${online} online · ${riders.length} total`;
+  if (bounds.length > 0) _fleetMap.fitBounds(bounds, {padding:[60,60], maxZoom:15});
+  if (_pendingSelectRiderId && _mapRidersData[_pendingSelectRiderId]) {
+    await selectRider(_mapRidersData[_pendingSelectRiderId]);
+    _pendingSelectRiderId = null;
+  }
+}
+
+async function selectRider(r) {
+  _selectedRiderId = r.rider_id;
+  if (_trackingInterval) { clearInterval(_trackingInterval); _trackingInterval = null; }
+  document.querySelectorAll('[id^="rli-"]').forEach(el=>{ el.style.background=''; });
+  const li = document.getElementById(`rli-${r.rider_id}`);
+  if (li) li.style.background = '#fef3c7';
+  const marker = _fleetMarkers[r.rider_id];
+  if (marker) _fleetMap.panTo(marker.getLatLng(), {animate:true});
+  else if (r.current_lat) _fleetMap.panTo([r.current_lat, r.current_lng], {animate:true});
+  const panel = document.getElementById('trackingPanel');
+  panel.style.display = 'block';
+  const name = r.full_name || r.username || 'Rider';
+  const isOnline = (r.status||'').toLowerCase()==='online';
+  const color = isOnline ? '#f59e0b' : '#94a3b8';
+  document.getElementById('trackingRiderName').textContent = name;
+  document.getElementById('trackingRiderAvatar').style.background = color;
+  document.getElementById('trackingRiderAvatar').textContent = name[0].toUpperCase();
+  document.getElementById('trackingStatus').style.color = isOnline ? '#10b981' : '#94a3b8';
+  document.getElementById('trackingStatus').textContent = (r.status||'OFFLINE').toUpperCase();
+  document.getElementById('trackingCoords').textContent = r.current_lat
+    ? `${Number(r.current_lat).toFixed(5)}, ${Number(r.current_lng).toFixed(5)}`
+    : 'No location data';
+  document.getElementById('trackingEta').textContent = '—';
+  document.getElementById('trackingOrderStatus').textContent = isOnline ? 'Checking...' : 'Offline';
+  if (isOnline) {
+    await pollRiderTracking(r.rider_id);
+    _trackingInterval = setInterval(()=>pollRiderTracking(r.rider_id), 4000);
+  }
+}
+
+async function pollRiderTracking(riderId) {
+  try {
+    const resp = await api('GET', `/company/riders/${riderId}/tracking`);
+    if (!resp || resp.status===404) {
+      document.getElementById('trackingOrderStatus').textContent = 'No active delivery';
+      _riderEtaText[riderId] = '';
+      _refreshMarkerIcon(riderId);
+      return;
+    }
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (!data || !data.current_location) return;
+    const lat = data.current_location.lat;
+    const lng = data.current_location.lng;
+    if (!lat || !lng) return;
+    // Bottom panel
+    document.getElementById('trackingCoords').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    const etaMin = data.eta_seconds != null ? Math.ceil(data.eta_seconds/60) : null;
+    _riderEtaText[riderId] = etaMin != null ? `${etaMin} min` : '';
+    document.getElementById('trackingEta').textContent = etaMin != null ? `${etaMin}m` : '—';
+    if (data.status) document.getElementById('trackingOrderStatus').textContent = data.status;
+    // Refresh marker icon with new ETA pill
+    _refreshMarkerIcon(riderId);
+    // Smooth animate marker to new position
+    const marker = _fleetMarkers[riderId];
+    if (marker) {
+      _smoothMoveTo(marker, lat, lng, 800);
+      if (_selectedRiderId===riderId) _fleetMap.panTo([lat, lng], {animate:true, duration:0.8});
+    }
+  } catch(e) {}
+}
+
+function _refreshMarkerIcon(riderId) {
+  const r = _mapRidersData[riderId];
+  const marker = _fleetMarkers[riderId];
+  if (!r || !marker) return;
+  const isOnline = (r.status||'').toLowerCase()==='online';
+  const color = isOnline ? '#f59e0b' : '#94a3b8';
+  const name = r.full_name || r.username || 'Rider';
+  marker.setIcon(_makeRiderIcon(name[0].toUpperCase(), color, isOnline, _riderEtaText[riderId]||''));
+}
+
+/* ══════════════════════ INIT ══════════════════════ */
+loadDashboard();
+</script>
+</body>
+</html>

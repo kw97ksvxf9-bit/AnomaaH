@@ -1,0 +1,12 @@
+nohup: ignoring input
+INFO:     Started server process [14381]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8400 (Press CTRL+C to quit)
+INFO:     127.0.0.1:58342 - "GET / HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58348 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:35910 - "POST /notify/event HTTP/1.1" 502 Bad Gateway
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [14381]

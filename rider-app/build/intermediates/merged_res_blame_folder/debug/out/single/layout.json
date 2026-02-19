@@ -1,0 +1,42 @@
+[
+    {
+        "merged": "com.delivery.rider-mergeDebugResources-59:/layout/item_order.xml",
+        "source": "com.delivery.rider-main-62:/layout/item_order.xml"
+    },
+    {
+        "merged": "com.delivery.rider-mergeDebugResources-59:/layout/activity_login.xml",
+        "source": "com.delivery.rider-main-62:/layout/activity_login.xml"
+    },
+    {
+        "merged": "com.delivery.rider-mergeDebugResources-59:/layout/activity_main.xml",
+        "source": "com.delivery.rider-main-62:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.delivery.rider-mergeDebugResources-59:/layout/fragment_profile.xml",
+        "source": "com.delivery.rider-main-62:/layout/fragment_profile.xml"
+    },
+    {
+        "merged": "com.delivery.rider-mergeDebugResources-59:/layout/fragment_order_details.xml",
+        "source": "com.delivery.rider-main-62:/layout/fragment_order_details.xml"
+    },
+    {
+        "merged": "com.delivery.rider-mergeDebugResources-59:/layout/item_payout.xml",
+        "source": "com.delivery.rider-main-62:/layout/item_payout.xml"
+    },
+    {
+        "merged": "com.delivery.rider-mergeDebugResources-59:/layout/fragment_orders.xml",
+        "source": "com.delivery.rider-main-62:/layout/fragment_orders.xml"
+    },
+    {
+        "merged": "com.delivery.rider-mergeDebugResources-59:/layout/fragment_earnings.xml",
+        "source": "com.delivery.rider-main-62:/layout/fragment_earnings.xml"
+    },
+    {
+        "merged": "com.delivery.rider-mergeDebugResources-59:/layout/activity_splash.xml",
+        "source": "com.delivery.rider-main-62:/layout/activity_splash.xml"
+    },
+    {
+        "merged": "com.delivery.rider-mergeDebugResources-59:/layout/fragment_tracking.xml",
+        "source": "com.delivery.rider-main-62:/layout/fragment_tracking.xml"
+    }
+]
