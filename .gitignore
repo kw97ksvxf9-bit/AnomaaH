@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+
+# Virtualenvs
+.venv/
+venv/
+env/
+ENV/
+
+# env files
+.env
+
+# Byte-compiled / optimized / DLL files
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Logs
+logs/
+*.log
+
+# IDEs
+.idea/
+.vscode/
+
+# macOS
+.DS_Store
+
+# Android / Rider app
+rider-app/build/
+rider-app/.gradle/
+rider-app/local.properties
+rider-app/*.apk
+rider-app/build/outputs/
+rider-app/build/intermediates/
+rider-app/build/tmp/
+*.dex
+*.class
+
+# Gradle
+.gradle/
+
+# Node
+node_modules/
+
+# PyCharm
+*.iml
+
+# Docker
+docker-compose.override.yml
+
+# Cache and compiled files
+**/__pycache__/
+**/*.pyc
+
+# Virtualenv site-packages binaries
+.venv/lib/**
+
+# Specific large files previously committed
+services/downloads_server/apk/
+
+# Ignore build artifacts anywhere named 'build' at repo root
+/build/
+
+# Keep this file
+!/.gitignore
