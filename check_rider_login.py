@@ -22,7 +22,8 @@ if len(sys.argv) < 2:
 
 phone = sys.argv[1].strip()
 
-with get_db() as db:
+db = next(get_db())
+try:
     # Find user by phone
     user = db.query(User).filter(User.phone == phone).first()
     
@@ -66,3 +67,5 @@ with get_db() as db:
         print(f"   Status: {rider.status}")
     else:
         print(f"\n❌ No rider profile found for this user!")
+finally:
+    db.close()
