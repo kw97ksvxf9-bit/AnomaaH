@@ -19,12 +19,12 @@ class AuthRepository @Inject constructor(
     suspend fun passcodeLogin(phone: String, passcode: String): Result<Rider> = try {
         val response = apiService.passcodeLogin(PasscodeLoginRequest(phone, passcode))
         if (response.isSuccessful && response.body()?.success == true) {
-            val data = response.body()
-            data?.accessToken?.let { sharedPrefManager.saveAuthToken(it) }
-            data?.data?.let {
-                sharedPrefManager.saveRider(it)
+            val apiResponse = response.body()
+            apiResponse?.accessToken?.let { sharedPrefManager.saveAuthToken(it) }
+            apiResponse?.data?.let { rider ->
+                sharedPrefManager.saveRider(rider)
                 sharedPrefManager.setLastLoginTime(System.currentTimeMillis())
-                Result.success(it)
+                Result.success(rider)
             } ?: Result.failure(Exception("No rider data returned"))
         } else {
             val msg = response.body()?.message ?: "Invalid phone or passcode"

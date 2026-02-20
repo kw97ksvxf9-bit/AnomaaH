@@ -22,10 +22,17 @@ def create_superadmin(username: str, password: str, email: str, phone: str = "+2
     """Create a superadmin user."""
     db = next(get_db())
     
-    # Check if user exists
-    existing = db.query(User).filter(User.username == username).first()
-    if existing:
-        print(f"❌ User '{username}' already exists")
+    # Check if username already exists
+    existing_user = db.query(User).filter(User.username == username).first()
+    if existing_user:
+        print(f"❌ Username '{username}' already exists")
+        return False
+    
+    # Check if email already exists
+    existing_email = db.query(User).filter(User.email == email).first()
+    if existing_email:
+        print(f"❌ Email '{email}' is already registered to another account")
+        print(f"   Try using a different email address")
         return False
     
     # Create user

@@ -9,7 +9,7 @@
     <string name="login_title">Welcome Back</string>
     <string name="login_subtitle">Sign in with your phone and passcode</string>
     <string name="phone_label">Phone Number</string>
-    <string name="phone_hint">+233 XX XXX XXXX</string>
+    <string name="phone_hint">054 XXX XXXX or 024 XXX XXXX</string>
     <string name="passcode_label">5-Digit Passcode</string>
     <string name="passcode_hint">Enter 5-digit code</string>
     <string name="btn_login">SIGN IN</string>

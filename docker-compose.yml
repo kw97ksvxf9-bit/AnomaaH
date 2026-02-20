@@ -241,5 +241,17 @@ services:
     depends_on:
       - auth-service
 
+  downloads-server:
+    image: python:3.11-slim
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./services/downloads_server/:/app
+    command: /bin/sh -c "pip install -r requirements.txt && python main.py"
+    ports:
+      - "8750:8750"
+    environment:
+      - PORT=8750
+
 volumes:
   pgdata:

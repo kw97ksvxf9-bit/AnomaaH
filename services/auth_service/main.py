@@ -185,11 +185,18 @@ async def register(request: RegisterRequest, db: Session = Depends(get_db), req:
         logger.info(f"User registered: {user.username} ({request.role})")
         
         # Create token
+        # Get company_id if this is a company_admin
+        company_id = None
+        if request.role == "company_admin":
+            company_obj = db.query(RiderCompany).filter(RiderCompany.user_id == user.id).first()
+            if company_obj:
+                company_id = company_obj.id
+        
         token = create_access_token(
             user_id=user.id,
             username=user.username,
             role=user.role,
-            company_id=company.id if request.role == "company_admin" else None
+            company_id=company_id
         )
         
         return Token(
