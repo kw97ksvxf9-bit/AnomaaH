@@ -11,7 +11,7 @@ BOOKING_URL = os.environ.get("BOOKING_SERVICE_URL", "http://localhost:8100")
 @app.middleware("http")
 async def tenant_middleware(request: Request, call_next):
     # Allow public endpoints to be called without tenant header
-    public_paths = {"/health", "/book"}
+    public_paths = {"/", "/health", "/book", "/docs", "/redoc", "/openapi.json", "/favicon.ico"}
     if request.url.path in public_paths:
         # mark as no tenant (public)
         request.state.tenant_id = None
@@ -20,6 +20,11 @@ async def tenant_middleware(request: Request, call_next):
         await TenantMiddleware.attach_tenant(request)
     response = await call_next(request)
     return response
+
+
+@app.get("/")
+async def root():
+    return {"message": "Welcome to API Gateway", "docs_url": "/docs"}
 
 
 @app.get("/health")
