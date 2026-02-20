@@ -14,10 +14,8 @@ import httpx
 app = FastAPI(title="Admin UI")
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
-APK_DIR = os.path.join(os.path.dirname(__file__), "apk")
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-app.mount("/apk", StaticFiles(directory=APK_DIR), name="apk")
 
 AUTH_SERVICE_URL = os.environ.get("AUTH_SERVICE_URL", "http://localhost:8600")
 PAYMENT_SERVICE_URL = os.environ.get("PAYMENT_SERVICE_URL", "http://localhost:8200")
