@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 import httpx
 
 # For demo: mock data sources (replace with real service calls in production)
@@ -70,18 +70,34 @@ def index():
     return FileResponse(os.path.join(STATIC_DIR, "index.html"))
 
 
+@app.get("/login")
+def login_page():
+    return FileResponse(os.path.join(STATIC_DIR, "login.html"))
+
+
+@app.get("/booking")
+def booking_page():
+    return FileResponse(os.path.join(STATIC_DIR, "booking.html"))
+
+
 @app.get("/superadmin")
-def superadmin():
+def superadmin(request: Request):
+    if not request.cookies.get("access_token"):
+        return RedirectResponse(url="/login?role=superadmin", status_code=302)
     return FileResponse(os.path.join(STATIC_DIR, "superadmin.html"))
 
 
 @app.get("/merchant")
-def merchant():
+def merchant(request: Request):
+    if not request.cookies.get("access_token"):
+        return RedirectResponse(url="/login?role=merchant", status_code=302)
     return FileResponse(os.path.join(STATIC_DIR, "merchant.html"))
 
 
 @app.get("/company")
-def company():
+def company(request: Request):
+    if not request.cookies.get("access_token"):
+        return RedirectResponse(url="/login?role=company", status_code=302)
     return FileResponse(os.path.join(STATIC_DIR, "company.html"))
 
 

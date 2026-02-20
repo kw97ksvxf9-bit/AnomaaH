@@ -1,0 +1,242 @@
+databases:
+  - name: anomaah-db
+    databaseName: delivery
+    user: anomaah
+    plan: free
+
+services:
+  # ── Main web UI (homepage, booking page, dashboards) ──────────────────────
+  - type: web
+    name: anomaah-web
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn services.admin_ui.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: anomaah-db
+          property: connectionString
+      - key: AUTH_SERVICE_URL
+        fromService:
+          name: anomaah-auth
+          type: web
+          property: host
+          transform: "https://{value}"
+      - key: PAYMENT_SERVICE_URL
+        fromService:
+          name: anomaah-payment
+          type: web
+          property: host
+          transform: "https://{value}"
+      - key: ORDER_SERVICE_URL
+        fromService:
+          name: anomaah-orders
+          type: web
+          property: host
+          transform: "https://{value}"
+      - key: TRACKING_SERVICE_URL
+        fromService:
+          name: anomaah-tracking
+          type: web
+          property: host
+          transform: "https://{value}"
+      - key: REVIEW_SERVICE_URL
+        fromService:
+          name: anomaah-reviews
+          type: web
+          property: host
+          transform: "https://{value}"
+      - key: RIDER_STATUS_URL
+        fromService:
+          name: anomaah-rider-status
+          type: web
+          property: host
+          transform: "https://{value}"
+      - key: BOOKING_SERVICE_URL
+        fromService:
+          name: anomaah-booking
+          type: web
+          property: host
+          transform: "https://{value}"
+      - key: NOTIFICATION_SERVICE_URL
+        fromService:
+          name: anomaah-notifications
+          type: web
+          property: host
+          transform: "https://{value}"
+      - key: JWT_SECRET
+        sync: false   # Set manually in Render dashboard
+      - key: SECRET_KEY
+        sync: false
+
+  # ── Auth service ──────────────────────────────────────────────────────────
+  - type: web
+    name: anomaah-auth
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn services.auth_service.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: anomaah-db
+          property: connectionString
+      - key: JWT_SECRET
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+
+  # ── Booking service ───────────────────────────────────────────────────────
+  - type: web
+    name: anomaah-booking
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn services.booking_service.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: anomaah-db
+          property: connectionString
+      - key: GOOGLE_MAPS_API_KEY
+        sync: false
+      - key: PAYMENT_SERVICE_URL
+        fromService:
+          name: anomaah-payment
+          type: web
+          property: host
+          transform: "https://{value}"
+      - key: NOTIFICATION_SERVICE_URL
+        fromService:
+          name: anomaah-notifications
+          type: web
+          property: host
+          transform: "https://{value}"
+
+  # ── Payment service ───────────────────────────────────────────────────────
+  - type: web
+    name: anomaah-payment
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn services.payment_service.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: anomaah-db
+          property: connectionString
+      - key: HUBTEL_CLIENT_ID
+        sync: false
+      - key: HUBTEL_CLIENT_SECRET
+        sync: false
+      - key: HUBTEL_MERCHANT_ACCOUNT
+        sync: false
+      - key: HUBTEL_PAYMENT_CLIENT_ID
+        sync: false
+      - key: HUBTEL_PAYMENT_CLIENT_SECRET
+        sync: false
+      - key: HUBTEL_PAYOUT_API_KEY
+        sync: false
+      - key: HUBTEL_PAYOUT_URL
+        sync: false
+      - key: HUBTEL_CALLBACK_URL
+        sync: false
+      - key: HUBTEL_WEBHOOK_SECRET
+        sync: false
+      - key: PLATFORM_FEE_GHS
+        value: "5"
+
+  # ── Order service ─────────────────────────────────────────────────────────
+  - type: web
+    name: anomaah-orders
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn services.order_service.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: anomaah-db
+          property: connectionString
+      - key: NOTIFICATION_SERVICE_URL
+        fromService:
+          name: anomaah-notifications
+          type: web
+          property: host
+          transform: "https://{value}"
+
+  # ── Tracking service ──────────────────────────────────────────────────────
+  - type: web
+    name: anomaah-tracking
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn services.tracking_service.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: anomaah-db
+          property: connectionString
+      - key: TRACKING_TTL_SECONDS
+        value: "300"
+
+  # ── Notification service ──────────────────────────────────────────────────
+  - type: web
+    name: anomaah-notifications
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn services.notification_service.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: anomaah-db
+          property: connectionString
+      - key: HUBTEL_SMS_API
+        value: "https://api.hubtel.com/v1/messages/sms"
+      - key: HUBTEL_SMS_SENDER
+        value: "ANOMAAH"
+      - key: HUBTEL_CLIENT_ID
+        sync: false
+      - key: HUBTEL_CLIENT_SECRET
+        sync: false
+
+  # ── Assignment service ────────────────────────────────────────────────────
+  - type: web
+    name: anomaah-assignment
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn services.assignment_service.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: anomaah-db
+          property: connectionString
+
+  # ── Review service ────────────────────────────────────────────────────────
+  - type: web
+    name: anomaah-reviews
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn services.review_service.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: anomaah-db
+          property: connectionString
+
+  # ── Rider status service ──────────────────────────────────────────────────
+  - type: web
+    name: anomaah-rider-status
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn services.rider_status_service.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: anomaah-db
+          property: connectionString

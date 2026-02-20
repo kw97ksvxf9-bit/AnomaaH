@@ -1,67 +1,297 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Admin UI</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      @media (max-width: 640px) { html { font-size: 14px; } }
-      body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-      input, select, button { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
-      input, select { border-radius: 6px; font-size: 16px; }
-      button { min-height: 44px; min-width: 44px; }
-    </style>
-  </head>
-  <body class="bg-slate-50 text-slate-800 min-h-screen">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-      <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <h1 class="text-2xl sm:text-3xl font-bold tracking-wide">ANOMAAH Admin</h1>
-        <nav class="flex flex-wrap gap-2 sm:gap-4 w-full sm:w-auto">
-          <a class="text-sky-600 hover:text-sky-700 px-3 py-2 rounded hover:bg-sky-50 transition" href="/superadmin">Superadmin</a>
-          <a class="text-sky-600 hover:text-sky-700 px-3 py-2 rounded hover:bg-sky-50 transition" href="/company">Company</a>
-          <a class="text-sky-600 hover:text-sky-700 px-3 py-2 rounded hover:bg-sky-50 transition" href="/merchant">Merchant</a>
-        </nav>
-      </header>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ANOMAAH — Delivery in Ghana</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      color: #111; background: #fff; line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
 
-      <section class="bg-white shadow rounded-lg p-4 sm:p-6">
-        <h2 class="text-lg sm:text-xl font-medium mb-4">Configuration</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <label class="block">
-            <div class="text-sm text-slate-600 font-medium mb-1">Auth Service URL</div>
-            <input id="authUrl" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500" value="http://localhost:8100" />
-          </label>
-          <label class="block">
-            <div class="text-sm text-slate-600 font-medium mb-1">Order Service URL</div>
-            <input id="orderUrl" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500" value="http://localhost:8500" />
-          </label>
-          <label class="block">
-            <div class="text-sm text-slate-600 font-medium mb-1">Payment Service URL</div>
-            <input id="payUrl" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500" value="http://localhost:8200" />
-          </label>
-          <label class="block">
-            <div class="text-sm text-slate-600 font-medium mb-1">Superadmin Token</div>
-            <input id="token" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500" />
-          </label>
-        </div>
-        <div class="mt-6 flex flex-col sm:flex-row gap-3">
-          <button id="saveBtn" class="bg-sky-600 text-white px-6 py-3 rounded-lg hover:bg-sky-700 active:bg-sky-800 transition font-medium w-full sm:w-auto">Save Configuration</button>
-        </div>
-      </section>
+    /* Nav */
+    nav {
+      border-bottom: 1px solid #e5e7eb; background: #fff;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-inner {
+      max-width: 1080px; margin: 0 auto; padding: 0 24px;
+      height: 60px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-mark {
+      width: 32px; height: 32px; background: #f97316; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 800; font-size: 16px;
+    }
+    .logo-text { font-weight: 800; font-size: 18px; letter-spacing: -0.02em; }
+    .nav-links { display: flex; align-items: center; gap: 4px; }
+    .nav-link {
+      font-size: 14px; color: #555; padding: 6px 12px;
+      border-radius: 6px; transition: background 0.12s;
+    }
+    .nav-link:hover { background: #f3f4f6; color: #111; }
+    .btn {
+      font-size: 14px; font-weight: 600; padding: 8px 18px; border-radius: 8px;
+      cursor: pointer; border: none; transition: background 0.12s, transform 0.1s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: #f97316; color: #fff; }
+    .btn-primary:hover { background: #ea580c; }
+    .btn-outline { background: transparent; border: 1.5px solid #d1d5db; color: #111; }
+    .btn-outline:hover { background: #f9fafb; }
 
-      <footer class="mt-6 text-xs sm:text-sm text-slate-500 text-center">Use the links above to open the relevant dashboard. Tokens are stored in your browser only.</footer>
+    /* Container */
+    .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+    /* Hero */
+    .hero {
+      padding: 80px 24px 72px; max-width: 1080px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center;
+    }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 600; color: #16a34a;
+      background: #f0fdf4; border: 1px solid #bbf7d0;
+      padding: 4px 12px; border-radius: 999px; margin-bottom: 20px;
+    }
+    .hero-tag::before {
+      content: ''; width: 7px; height: 7px;
+      background: #16a34a; border-radius: 50%; flex-shrink: 0;
+    }
+    h1 {
+      font-size: 2.8rem; font-weight: 800; line-height: 1.12;
+      letter-spacing: -0.03em; color: #0f172a; margin-bottom: 20px;
+    }
+    .hero-sub { font-size: 1.05rem; color: #64748b; line-height: 1.65; margin-bottom: 32px; }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    /* Hero mockup card */
+    .order-card {
+      background: #0f172a; border-radius: 16px; padding: 28px; color: #fff;
+    }
+    .card-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #64748b; margin-bottom: 16px; }
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      background: #f97316; color: #fff; padding: 3px 10px; border-radius: 999px; float: right;
+    }
+    .order-row {
+      display: flex; justify-content: space-between;
+      padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,.07);
+      font-size: 14px;
+    }
+    .order-row:last-of-type { border-bottom: none; }
+    .row-label { color: #64748b; }
+    .row-val { color: #f1f5f9; font-weight: 600; }
+    .price-box {
+      margin-top: 20px; padding: 16px; border-radius: 10px;
+      background: rgba(249,115,22,.12);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .price-label { font-size: 13px; color: #94a3b8; }
+    .price-big { font-size: 1.5rem; font-weight: 800; color: #f97316; }
+
+    /* Sections */
+    .section { padding: 72px 0; border-top: 1px solid #e5e7eb; }
+    .section-eyebrow {
+      font-size: 12px; font-weight: 700; letter-spacing: .09em;
+      text-transform: uppercase; color: #f97316; margin-bottom: 10px;
+    }
+    h2 { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; color: #0f172a; margin-bottom: 8px; }
+    .section-sub { color: #64748b; font-size: 1rem; margin-bottom: 48px; max-width: 520px; }
+
+    /* Steps */
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+    .step-num {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: #fff7ed; border: 1.5px solid #fed7aa;
+      color: #f97316; font-weight: 800; font-size: 15px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+    }
+    .step h3 { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+    .step p { font-size: 14px; color: #64748b; line-height: 1.65; }
+
+    /* Portals */
+    .portals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .portal {
+      border: 1.5px solid #e5e7eb; border-radius: 12px; padding: 24px 20px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      display: block;
+    }
+    a.portal:hover { border-color: #f97316; box-shadow: 0 2px 12px rgba(249,115,22,.1); }
+    .portal-icon { font-size: 26px; margin-bottom: 12px; }
+    .portal h3 { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
+    .portal p { font-size: 13px; color: #64748b; line-height: 1.55; margin-bottom: 16px; }
+    .portal-cta { font-size: 13px; font-weight: 600; color: #f97316; }
+    .portal-muted { background: #fafafa; }
+    .portal-muted h3 { color: #9ca3af; }
+    .portal-muted p { color: #9ca3af; }
+    .portal-muted .portal-cta { color: #9ca3af; }
+
+    /* Footer */
+    .footer-inner {
+      max-width: 1080px; margin: 0 auto; padding: 36px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 13px; color: #9ca3af; border-top: 1px solid #e5e7eb;
+    }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { color: #9ca3af; transition: color 0.12s; }
+    .footer-links a:hover { color: #f97316; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero { grid-template-columns: 1fr; padding: 48px 20px 40px; gap: 32px; }
+      .order-card { display: none; }
+      h1 { font-size: 2.1rem; }
+      .steps { grid-template-columns: 1fr; gap: 28px; }
+      .portals { grid-template-columns: 1fr 1fr; }
+      .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+      .nav-links .nav-link { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="logo">
+      <div class="logo-mark">A</div>
+      <span class="logo-text">ANOMAAH</span>
+    </a>
+    <div class="nav-links">
+      <a href="/booking" class="nav-link">Book delivery</a>
+      <a href="#portals" class="nav-link">Portals</a>
+      <a href="/login" class="btn btn-primary">Sign in</a>
     </div>
+  </div>
+</nav>
 
-    <script>
-      const fields = ['authUrl','orderUrl','payUrl','token'];
-      fields.forEach(f=>{
-        const el = document.getElementById(f);
-        el.value = localStorage.getItem(f) || el.value || '';
-      });
-      document.getElementById('saveBtn').addEventListener('click', ()=>{
-        fields.forEach(f=> localStorage.setItem(f, document.getElementById(f).value));
-        alert('Saved configuration');
-      });
-    </script>
-  </body>
+<!-- Hero -->
+<div class="hero">
+  <div>
+    <div class="hero-tag">Live in Ghana</div>
+    <h1>Delivery,<br>handled.</h1>
+    <p class="hero-sub">
+      Book a same-day delivery in under a minute. ANOMAAH connects customers
+      with verified riders across Ghana — with live GPS tracking and Mobile Money payment.
+    </p>
+    <div class="hero-actions">
+      <a href="/booking" class="btn btn-primary" style="font-size:15px;padding:12px 24px">Book a delivery</a>
+      <a href="#how-it-works" class="btn btn-outline" style="font-size:15px;padding:12px 24px">How it works</a>
+    </div>
+  </div>
+
+  <div class="order-card">
+    <div>
+      <span class="card-label">Order summary</span>
+      <span class="badge">In transit</span>
+    </div>
+    <div style="clear:both;margin-top:8px">
+      <div class="order-row">
+        <span class="row-label">Pickup</span>
+        <span class="row-val">Accra Central</span>
+      </div>
+      <div class="order-row">
+        <span class="row-label">Drop-off</span>
+        <span class="row-val">East Legon</span>
+      </div>
+      <div class="order-row">
+        <span class="row-label">Distance</span>
+        <span class="row-val">8.4 km</span>
+      </div>
+      <div class="order-row">
+        <span class="row-label">ETA</span>
+        <span class="row-val">22 min</span>
+      </div>
+    </div>
+    <div class="price-box">
+      <span class="price-label">Total cost</span>
+      <span class="price-big">GH₵ 24.50</span>
+    </div>
+  </div>
+</div>
+
+<!-- How it works -->
+<div class="section" id="how-it-works">
+  <div class="container">
+    <div class="section-eyebrow">How it works</div>
+    <h2>Three steps to done</h2>
+    <p class="section-sub">No account needed for customers. Just enter your addresses and pay.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Enter pickup &amp; drop-off</h3>
+        <p>Type your locations — Google Maps autocomplete fills in the rest. We calculate distance and price instantly.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Pay with Mobile Money</h3>
+        <p>Pay via MTN MoMo or Telecel Cash. No cash, no wait. You get a payment confirmation right away.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Track in real time</h3>
+        <p>A rider is assigned automatically. Follow the delivery on a live map until it arrives at the door.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Partner portals -->
+<div class="section" id="portals">
+  <div class="container">
+    <div class="section-eyebrow">Portals</div>
+    <h2>Sign in to your account</h2>
+    <p class="section-sub">Riders use the mobile app. Web access is for fleet companies, merchants, and admins.</p>
+    <div class="portals">
+
+      <a href="/login?role=company" class="portal">
+        <div class="portal-icon">🚛</div>
+        <h3>Fleet Company</h3>
+        <p>Manage your riders, track earnings, and request payouts.</p>
+        <div class="portal-cta">Sign in →</div>
+      </a>
+
+      <a href="/login?role=merchant" class="portal">
+        <div class="portal-icon">🏪</div>
+        <h3>Merchant</h3>
+        <p>View orders placed through your shop and manage deliveries.</p>
+        <div class="portal-cta">Sign in →</div>
+      </a>
+
+      <a href="/login?role=superadmin" class="portal">
+        <div class="portal-icon">🛡️</div>
+        <h3>Super Admin</h3>
+        <p>Platform-wide oversight — users, orders, payouts, and settings.</p>
+        <div class="portal-cta">Sign in →</div>
+      </a>
+
+      <div class="portal portal-muted">
+        <div class="portal-icon" style="filter:grayscale(1);opacity:.4">🏍️</div>
+        <h3>Rider</h3>
+        <p>Riders accept and track jobs through the ANOMAAH mobile app.</p>
+        <div class="portal-cta">📱 Mobile app only</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="footer-inner">
+  <span>© 2026 ANOMAAH</span>
+  <div class="footer-links">
+    <a href="/booking">Book delivery</a>
+    <a href="/login">Sign in</a>
+    <a href="/docs">API docs</a>
+  </div>
+</div>
+
+</body>
 </html>

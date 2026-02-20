@@ -6,46 +6,70 @@
   <title>ANOMAAH — Sign In</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body{font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+    *{box-sizing:border-box}
+    body{font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;background:#0f172a;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
     input{-webkit-appearance:none;-moz-appearance:none;appearance:none;font-size:16px}
-    button{min-height:44px}
+    button{min-height:44px;cursor:pointer}
+    .tab-btn{flex:1;padding:10px 8px;border-radius:10px;font-size:.8rem;font-weight:600;border:none;transition:background .15s,color .15s;cursor:pointer}
+    .tab-btn.active{background:#fff;color:#0f172a;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+    .tab-btn:not(.active){background:transparent;color:#94a3b8}
+    .tab-btn:not(.active):hover{color:#cbd5e1}
+    .role-badge{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:8px}
   </style>
 </head>
-<body class="bg-slate-50 flex items-center justify-center min-h-screen px-4 py-6">
-  <div class="w-full max-w-sm">
+<body>
+  <div style="width:100%;max-width:420px">
+
     <!-- Logo -->
     <div class="text-center mb-6">
-      <div class="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-3">
-        <span class="text-white font-bold text-xl">P</span>
-      </div>
-      <h1 class="text-2xl font-bold text-slate-900 tracking-wide">ANOMAAH</h1>
-      <p class="text-sm text-slate-500 mt-1">Sign in to your dashboard</p>
+      <a href="/" style="text-decoration:none;display:inline-flex;align-items:center;gap:10px;justify-content:center">
+        <div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#f97316,#ea580c);display:flex;align-items:center;justify-content:center">
+          <span class="text-white font-black text-lg">A</span>
+        </div>
+        <span class="text-white font-black text-2xl tracking-wide">ANOMAAH</span>
+      </a>
+      <p class="text-sm mt-2" style="color:#64748b">Sign in to your dashboard</p>
     </div>
 
-    <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200">
+    <!-- Card -->
+    <div style="background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:28px 24px">
+
+      <!-- Role tabs -->
+      <div style="background:rgba(0,0,0,.3);border-radius:12px;padding:4px;display:flex;gap:2px;margin-bottom:24px" id="tabBar">
+        <button class="tab-btn active" data-role="merchant" onclick="switchTab(this)">🏪 Merchant</button>
+        <button class="tab-btn" data-role="company" onclick="switchTab(this)">🚛 Company</button>
+        <button class="tab-btn" data-role="superadmin" onclick="switchTab(this)">🛡️ Admin</button>
+      </div>
+
+      <!-- Role badge -->
+      <div id="roleBadge" class="role-badge mb-4" style="background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.3)">
+        <span id="roleEmoji">🏪</span> <span id="roleLabel">Merchant Portal</span>
+      </div>
+
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1.5">Username</label>
-          <input id="username" placeholder="Enter username" class="w-full border border-slate-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" />
+          <label class="block text-sm font-medium mb-1.5" style="color:#cbd5e1">Username</label>
+          <input id="username" placeholder="Enter your username"
+            style="width:100%;background:#0f172a;border:1.5px solid rgba(255,255,255,.15);border-radius:10px;padding:14px 16px;color:#f1f5f9;font-size:16px;transition:border-color .15s"
+            onfocus="this.style.borderColor='#f97316'" onblur="this.style.borderColor='rgba(255,255,255,.15)'" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
-          <input id="password" type="password" placeholder="Enter password" class="w-full border border-slate-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" />
+          <label class="block text-sm font-medium mb-1.5" style="color:#cbd5e1">Password</label>
+          <input id="password" type="password" placeholder="Enter your password"
+            style="width:100%;background:#0f172a;border:1.5px solid rgba(255,255,255,.15);border-radius:10px;padding:14px 16px;color:#f1f5f9;font-size:16px;transition:border-color .15s"
+            onfocus="this.style.borderColor='#f97316'" onblur="this.style.borderColor='rgba(255,255,255,.15)'" />
         </div>
-        <button id="loginBtn" class="w-full bg-slate-900 text-white px-6 py-3 rounded-lg hover:bg-slate-800 active:bg-slate-700 transition font-medium text-sm">
+        <button id="loginBtn"
+          style="width:100%;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;font-weight:700;font-size:.95rem;padding:14px;border-radius:10px;border:none;box-shadow:0 4px 14px rgba(249,115,22,.3);transition:opacity .15s">
           Sign In
         </button>
       </div>
-      <div id="msg" class="mt-4 text-sm text-center hidden"></div>
 
-      <!-- Hint -->
-      <div class="mt-5 pt-4 border-t border-slate-100">
-        <p class="text-xs text-slate-400 text-center mb-2">Demo credentials</p>
-        <div class="space-y-1.5 text-xs text-slate-500">
-          <div class="flex justify-between items-center"><span>🛡️ Superadmin</span><span class="font-mono text-slate-600">superadmin / admin123</span></div>
-          <div class="flex justify-between items-center"><span>🏢 Rider Company</span><span class="font-mono text-slate-600">demo_company / company123</span></div>
-        </div>
-        <p class="text-[11px] text-slate-400 text-center mt-3">You'll be redirected automatically based on your role</p>
+      <div id="msg" class="mt-4 text-sm text-center" style="display:none"></div>
+
+      <!-- Back link -->
+      <div class="text-center mt-5">
+        <a href="/" class="text-xs" style="color:#475569;text-decoration:none">← Back to Homepage</a>
       </div>
     </div>
   </div>
@@ -53,24 +77,62 @@
   <script>
     const $ = id => document.getElementById(id);
 
+    const ROLES = {
+      merchant:   { emoji: '🏪', label: 'Merchant Portal',      badge: 'rgba(16,185,129,.15)',  badgeColor: '#34d399', badgeBorder: 'rgba(16,185,129,.3)' },
+      company:    { emoji: '🚛', label: 'Fleet Company Portal', badge: 'rgba(59,130,246,.15)',  badgeColor: '#60a5fa', badgeBorder: 'rgba(59,130,246,.3)' },
+      superadmin: { emoji: '🛡️', label: 'Super Admin Portal',  badge: 'rgba(168,85,247,.15)', badgeColor: '#c084fc', badgeBorder: 'rgba(168,85,247,.3)' },
+    };
+    let activeRole = 'merchant';
+
+    // Pre-select role from URL query param (?role=company etc)
+    const urlRole = new URLSearchParams(location.search).get('role');
+    if (urlRole && ROLES[urlRole]) {
+      activeRole = urlRole;
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.role === urlRole);
+      });
+      applyRoleBadge(urlRole);
+    }
+
+    function applyRoleBadge(role) {
+      const r = ROLES[role];
+      const badge = $('roleBadge');
+      badge.style.background = r.badge;
+      badge.style.color = r.badgeColor;
+      badge.style.borderColor = r.badgeBorder;
+      $('roleEmoji').textContent = r.emoji;
+      $('roleLabel').textContent = r.label;
+    }
+
+    function switchTab(btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeRole = btn.dataset.role;
+      applyRoleBadge(activeRole);
+      $('msg').style.display = 'none';
+    }
+
     function showMsg(text, isError) {
       const el = $('msg');
       el.textContent = text;
-      el.className = 'mt-4 text-sm text-center ' + (isError ? 'text-red-600' : 'text-emerald-600');
+      el.style.display = 'block';
+      el.style.color = isError ? '#f87171' : '#34d399';
     }
 
     $('loginBtn').onclick = doLogin;
-    $('password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin() });
-    $('username').addEventListener('keydown', e => { if (e.key === 'Enter') $('password').focus() });
+    $('password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    $('username').addEventListener('keydown', e => { if (e.key === 'Enter') $('password').focus(); });
 
     async function doLogin() {
-      $('msg').className = 'mt-4 text-sm text-center hidden';
+      $('msg').style.display = 'none';
       const u = $('username').value.trim();
       const p = $('password').value;
-      if (!u || !p) { showMsg('Username and password required', true); return }
+      if (!u || !p) { showMsg('Username and password required', true); return; }
 
-      $('loginBtn').disabled = true;
-      $('loginBtn').textContent = 'Signing in...';
+      const btn = $('loginBtn');
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+      btn.style.opacity = '0.7';
 
       try {
         const r = await fetch('/api/login', {
@@ -81,33 +143,23 @@
         if (!r.ok) {
           const t = await r.text();
           let detail = 'Login failed';
-          try { detail = JSON.parse(t).detail || t } catch(e) { detail = t }
+          try { detail = JSON.parse(t).detail || t; } catch(e) { detail = t; }
           showMsg(detail, true);
-          $('loginBtn').disabled = false;
-          $('loginBtn').textContent = 'Sign In';
+          btn.disabled = false; btn.textContent = 'Sign In'; btn.style.opacity = '1';
           return;
         }
         const data = await r.json();
         const role = (data.role || '').toLowerCase();
-
-        // Auto-redirect based on actual role from server
-        if (role === 'company_admin') {
-          showMsg('Welcome! Redirecting to Fleet Dashboard...', false);
-          setTimeout(() => { window.location.href = '/company'; }, 500);
-        } else if (role === 'superadmin') {
-          showMsg('Welcome! Redirecting to Admin Dashboard...', false);
-          setTimeout(() => { window.location.href = '/superadmin'; }, 500);
-        } else if (role === 'merchant') {
-          showMsg('Welcome! Redirecting to Merchant Dashboard...', false);
-          setTimeout(() => { window.location.href = '/merchant'; }, 500);
-        } else {
-          showMsg('Signed in as ' + (data.username || u), false);
-          setTimeout(() => { window.location.href = '/superadmin'; }, 500);
-        }
+        showMsg('Welcome! Redirecting...', false);
+        setTimeout(() => {
+          if (role === 'company_admin') window.location.href = '/company';
+          else if (role === 'superadmin')   window.location.href = '/superadmin';
+          else if (role === 'merchant')     window.location.href = '/merchant';
+          else window.location.href = '/superadmin';
+        }, 500);
       } catch(e) {
         showMsg(e.message, true);
-        $('loginBtn').disabled = false;
-        $('loginBtn').textContent = 'Sign In';
+        btn.disabled = false; btn.textContent = 'Sign In'; btn.style.opacity = '1';
       }
     }
   </script>
