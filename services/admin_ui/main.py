@@ -99,6 +99,39 @@ def company(request: Request):
     return FileResponse(os.path.join(STATIC_DIR, "company.html"))
 
 
+# --- APK Download endpoint ---
+
+APK_DIR = os.path.join(os.path.dirname(__file__), "apk")
+
+@app.get("/download/rider-app")
+def download_rider_apk():
+    """Serve the latest rider app APK for download."""
+    apk_path = os.path.join(APK_DIR, "anomaah-rider-app.apk")
+    if not os.path.isfile(apk_path):
+        raise HTTPException(status_code=404, detail="APK not available yet")
+    return FileResponse(
+        apk_path,
+        media_type="application/vnd.android.package-archive",
+        filename="anomaah-rider-app.apk"
+    )
+
+@app.get("/api/rider-app/info")
+def rider_app_info():
+    """Return metadata about the latest rider APK."""
+    apk_path = os.path.join(APK_DIR, "anomaah-rider-app.apk")
+    if not os.path.isfile(apk_path):
+        return {"available": False}
+    stat = os.stat(apk_path)
+    return {
+        "available": True,
+        "filename": "anomaah-rider-app.apk",
+        "size_bytes": stat.st_size,
+        "size_mb": round(stat.st_size / (1024 * 1024), 2),
+        "updated_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+        "download_url": "/download/rider-app"
+    }
+
+
 # --- Auth endpoints ---
 
 @app.post("/api/login")
@@ -123,6 +156,17 @@ def api_login(payload: dict, response: Response):
 def api_logout(response: Response):
     response.delete_cookie("access_token", path="/")
     return {"ok": True}
+
+
+# --- Maps config endpoint ---
+@app.get("/api/maps-config")
+def maps_config():
+    api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "").strip()
+    has_key = bool(api_key) and len(api_key) > 10
+    return {
+        "has_key": has_key,
+        "api_key": api_key if has_key else None
+    }
 
 
 # --- Company rider earnings endpoint ---
@@ -994,12 +1038,7 @@ def api_book(payload: dict):
                     media_type=r.headers.get("content-type", "application/json"))
 
 
-@app.get("/api/maps-config")
-def maps_config():
-    """Return Google Maps API key for client-side use (public endpoint)."""
-    key = os.environ.get("GOOGLE_MAPS_API_KEY", "")
-    return {"api_key": key, "has_key": bool(key)}
-
+# Note: /api/maps-config route is defined earlier with proper validation
 
 # --- Rider detail endpoint ---
 @app.get("/api/admin/rider/{rider_id}/detail")

@@ -475,8 +475,8 @@ async def get_assignment_stats(
     total_assigned = db.query(Order).filter(Order.status == OrderStatus.ASSIGNED).count()
     
     # Riders online
-    from shared.models import Rider
-    active_riders = db.query(Rider).filter(Rider.is_active == True).count()
+    from shared.models import Rider, RiderStatus
+    active_riders = db.query(Rider).filter(Rider.status == RiderStatus.ONLINE).count()
     
     return {
         "pending_orders": total_pending,

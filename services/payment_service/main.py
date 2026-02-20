@@ -71,6 +71,12 @@ HUBTEL_WEBHOOK_SECRET = os.environ.get("HUBTEL_WEBHOOK_SECRET")
 HUBTEL_SIGNATURE_HEADER = os.environ.get("HUBTEL_SIGNATURE_HEADER", "X-Hubtel-Signature")
 JWT_SECRET = os.environ.get("JWT_SECRET", os.environ.get("SECRET_KEY", "replace-me"))
 
+# Service URLs
+NOTIFICATION_SERVICE_URL = os.environ.get("NOTIFICATION_SERVICE_URL", "http://localhost:8400")
+ORDER_SERVICE_URL = os.environ.get("ORDER_SERVICE_URL", "http://localhost:8500")
+STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY", "")
+PAYPAL_ACCESS_TOKEN = os.environ.get("PAYPAL_ACCESS_TOKEN", "")
+
 # ── Hubtel helper utilities ──────────────────────────────────────────────────
 _MTN_PREFIXES       = {"024","054","055","059","025","068","069"}
 _VODAFONE_PREFIXES  = {"020","050"}
@@ -429,7 +435,7 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
         if webhook_status in ['COMPLETED', 'SUCCESS', 'PAID']:
             if payment:  # PostgreSQL
                 payment.status = PaymentStatus.COMPLETED
-                payment.reference = reference
+                payment.hubtel_payment_id = reference or payment.hubtel_payment_id
                 payment.completed_at = datetime.utcnow()
                 db.commit()
             else:  # MVP
@@ -458,8 +464,7 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
         elif webhook_status in ['FAILED', 'DECLINED']:
             if payment:  # PostgreSQL
                 payment.status = PaymentStatus.FAILED
-                payment.reference = reference
-                payment.failed_at = datetime.utcnow()
+                payment.hubtel_payment_id = reference or payment.hubtel_payment_id
                 db.commit()
             else:  # MVP
                 payments[payment_id]['status'] = 'FAILED'
@@ -844,7 +849,7 @@ async def admin_webhook_log(user=Depends(get_current_user)):
 
 
 @app.get("/payments/status/{payment_id}")
-async def status(payment_id: str):
+async def get_payment_status(payment_id: str):
     p = payments.get(payment_id)
     if not p:
         raise HTTPException(status_code=404, detail="payment not found")
@@ -868,14 +873,13 @@ class RefundResponse(BaseModel):
     error: Optional[str] = None
 
 @app.post("/payments/refund", response_model=RefundResponse)
-async def refund_payment(request: RefundRequest):
+async def refund_payment(request: RefundRequest, db: Session = Depends(get_db)):
     """
     Process a refund for a completed payment.
     
     Supports:
-    - Hubtel: Via refund API
-    - Stripe: Via refund API
-    - PayPal: Via refund API
+    - Hubtel: Via refund API (primary)
+    - Falls back to logging for unsupported providers
     """
     
     payment = db.query(Payment).filter(Payment.id == request.payment_id).first()
@@ -898,20 +902,20 @@ async def refund_payment(request: RefundRequest):
     try:
         refund_id = str(uuid.uuid4())
         
-        # Process refund based on provider
-        provider = payment.provider  # hubtel, stripe, paypal, etc.
+        # Determine provider from payment_method field
+        provider = (payment.payment_method or "hubtel").lower()
         refund_reference = None
         refund_status = "pending"
         error = None
         
-        if provider == "hubtel" and payment.hubtel_ref:
+        if payment.hubtel_payment_id:
             try:
                 # Call Hubtel refund API
                 async with httpx.AsyncClient(timeout=10.0) as client:
                     refund_response = await client.post(
                         "https://api.hubtel.com/v1/pay/refund",
                         json={
-                            "transactionId": payment.hubtel_ref,
+                            "transactionId": payment.hubtel_payment_id,
                             "amount": request.refund_amount,
                             "reason": request.reason
                         },
@@ -934,65 +938,12 @@ async def refund_payment(request: RefundRequest):
                 error = str(e)
                 logger.error(f"Hubtel refund error: {e}")
         
-        elif provider == "stripe" and payment.stripe_id:
-            try:
-                # Call Stripe refund API
-                async with httpx.AsyncClient(timeout=10.0) as client:
-                    refund_response = await client.post(
-                        f"https://api.stripe.com/v1/charges/{payment.stripe_id}/refunds",
-                        json={"amount": int(request.refund_amount * 100)},  # Stripe uses cents
-                        headers={"Authorization": f"Bearer {STRIPE_API_KEY}"},
-                        timeout=10.0
-                    )
-                    
-                    if refund_response.status_code in [200, 201]:
-                        refund_data = refund_response.json()
-                        refund_reference = refund_data.get("id", refund_id)
-                        refund_status = "completed"
-                        logger.info(f"Stripe refund processed: {refund_reference} ({request.refund_amount} GHS)")
-                    else:
-                        refund_status = "failed"
-                        error = f"Stripe error: {refund_response.status_code}"
-                        logger.error(f"Stripe refund failed: {error}")
-            
-            except Exception as e:
-                refund_status = "failed"
-                error = str(e)
-                logger.error(f"Stripe refund error: {e}")
-        
-        elif provider == "paypal" and payment.paypal_id:
-            try:
-                # Call PayPal refund API
-                async with httpx.AsyncClient(timeout=10.0) as client:
-                    refund_response = await client.post(
-                        f"https://api.paypal.com/v2/payments/captures/{payment.paypal_id}/refund",
-                        json={"amount": {"value": str(request.refund_amount), "currency_code": "GHS"}},
-                        headers={"Authorization": f"Bearer {PAYPAL_ACCESS_TOKEN}"},
-                        timeout=10.0
-                    )
-                    
-                    if refund_response.status_code in [200, 201]:
-                        refund_data = refund_response.json()
-                        refund_reference = refund_data.get("id", refund_id)
-                        refund_status = "completed"
-                        logger.info(f"PayPal refund processed: {refund_reference} ({request.refund_amount} GHS)")
-                    else:
-                        refund_status = "failed"
-                        error = f"PayPal error: {refund_response.status_code}"
-                        logger.error(f"PayPal refund failed: {error}")
-            
-            except Exception as e:
-                refund_status = "failed"
-                error = str(e)
-                logger.error(f"PayPal refund error: {e}")
-        
         else:
             refund_status = "failed"
-            error = f"Unknown provider or missing payment reference"
-            logger.warning(f"Cannot refund: provider={provider}, hubtel_ref={payment.hubtel_ref}")
+            error = "Missing Hubtel payment reference for refund"
+            logger.warning(f"Cannot refund: provider={provider}, hubtel_payment_id={payment.hubtel_payment_id}")
         
         # Store refund record
-        # Note: In production, add a Refund model to track all refunds
         log_alert("info", f"Refund {refund_id}: {refund_status} ({request.refund_amount} GHS from {provider})")
         
         return RefundResponse(
@@ -1013,7 +964,7 @@ async def refund_payment(request: RefundRequest):
 # ==================== Get Refund Status ====================
 
 @app.get("/payments/{payment_id}/refund-status")
-async def get_refund_status(payment_id: str):
+async def get_refund_status(payment_id: str, db: Session = Depends(get_db)):
     """Get refund status for a payment."""
     
     payment = db.query(Payment).filter(Payment.id == payment_id).first()

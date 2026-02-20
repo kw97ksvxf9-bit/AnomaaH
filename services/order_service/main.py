@@ -43,6 +43,8 @@ logger = logging.getLogger(__name__)
 # Service URLs
 TRACKING_SERVICE_URL = os.environ.get("TRACKING_SERVICE_URL", "http://localhost:8300")
 NOTIFICATION_SERVICE_URL = os.environ.get("NOTIFICATION_SERVICE_URL", "http://localhost:8400")
+PAYMENT_SERVICE_URL = os.environ.get("PAYMENT_SERVICE_URL", "http://localhost:8200")
+ASSIGNMENT_SERVICE_URL = os.environ.get("ASSIGNMENT_SERVICE_URL", "http://localhost:8900")
 
 # ==================== Pydantic Models ====================
 

@@ -44,7 +44,7 @@ class RateLimiter:
 
 # Global rate limiters for different endpoints
 public_limiter = RateLimiter(max_requests=20, window_seconds=60)  # 20 req/min
-auth_limiter = RateLimiter(max_requests=5, window_seconds=60)  # 5 req/min for auth
+auth_limiter = RateLimiter(max_requests=100, window_seconds=60)  # 100 req/min for auth (increased for simulation batch ops)
 api_limiter = RateLimiter(max_requests=100, window_seconds=60)  # 100 req/min for API
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):

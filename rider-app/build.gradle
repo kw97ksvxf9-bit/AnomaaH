@@ -23,24 +23,38 @@ android {
         applicationId "com.delivery.rider"
         minSdk 23
         targetSdk 34
-        versionCode 1
+        versionCode 100
         versionName "1.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         
-        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8600/\"")
-        buildConfigField("String", "ORDER_SERVICE_URL", "\"http://10.0.2.2:8500/\"")
-        buildConfigField("String", "TRACKING_SERVICE_URL", "\"http://10.0.2.2:8300/\"")
-        buildConfigField("String", "NOTIFICATION_SERVICE_URL", "\"http://10.0.2.2:8400/\"")
+        buildConfigField("String", "API_BASE_URL", "\"https://anomaah.onrender.com/\"")
+        buildConfigField("String", "ORDER_SERVICE_URL", "\"https://anomaah.onrender.com/\"")
+        buildConfigField("String", "TRACKING_SERVICE_URL", "\"https://anomaah.onrender.com/\"")
+        buildConfigField("String", "NOTIFICATION_SERVICE_URL", "\"https://anomaah.onrender.com/\"")
+        buildConfigField("Boolean", "DEBUG_MODE", "false")
+    }
+
+    signingConfigs {
+        release {
+            storeFile file(System.getenv('RIDER_KEYSTORE_PATH') ?: './rider-app.jks')
+            storePassword System.getenv('RIDER_KEYSTORE_PASSWORD') ?: 'android'
+            keyAlias System.getenv('RIDER_KEY_ALIAS') ?: 'rider-key'
+            keyPassword System.getenv('RIDER_KEY_PASSWORD') ?: 'android'
+        }
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            signingConfig signingConfigs.release
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            debuggable false
         }
         debug {
             minifyEnabled false
+            debuggable true
         }
     }
 

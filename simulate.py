@@ -170,6 +170,11 @@ def phase2_companies():
         body = dict(username=uname, email=email, password="Pass@1234",
                     phone=phone, role="company_admin",
                     company_name=cname, contact_person=contact)
+        
+        # Add delay between registrations to avoid rate limiting
+        if i > 1:
+            time.sleep(2)
+            
         r = post(f"{AUTH_URL}/register", body)
         if r.status_code in (200,201):
             tok = r.json().get("access_token","")
