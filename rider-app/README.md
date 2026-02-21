@@ -231,6 +231,16 @@ rider-app/
    - Update `ApiClient.kt` with backend API URL
    - Default: `http://localhost:8000` (development)
 
+4. **Map provider configuration (billing-free testing)**:
+   - The app normally uses Google Maps which requires a valid Maps API key with billing enabled.
+   - For development without a Google key, enable a fallback to OpenStreetMap (Leaflet) or Mapbox:
+     * Set `USE_OSM_FALLBACK=true` in `build.gradle` (default) to load an OSM view in a WebView.
+     * To use Mapbox instead, install the free SDK and provide an access token:
+       1. Sign up at https://www.mapbox.com and obtain a token (free tier).
+       2. Add `MAPBOX_ACCESS_TOKEN=<your_token>` to `local.properties` or pass as a Gradle property.
+       3. The app will automatically initialize a Mapbox map when the token is nonempty.
+   - When you have a Google billing-enabled key, set `USE_OSM_FALLBACK=false` and clear `MAPBOX_ACCESS_TOKEN`.
+
 ### Build and Run
 
 ```bash

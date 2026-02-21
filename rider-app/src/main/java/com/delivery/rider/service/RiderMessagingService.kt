@@ -11,11 +11,9 @@ import com.delivery.rider.RiderApplication
 import com.delivery.rider.ui.main.MainActivity
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import com.delivery.rider.data.local.SharedPrefManager
 
-@AndroidEntryPoint
 class RiderMessagingService : FirebaseMessagingService() {
     
     @Inject

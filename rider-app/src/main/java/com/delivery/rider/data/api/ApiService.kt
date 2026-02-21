@@ -84,8 +84,10 @@ interface ApiService {
     
     // ==================== Rider Status ====================
     
-    @POST("status/update")
+    // STATUS_SERVICE_URL may be different from API_BASE_URL, call with full URL via @Url
+    @POST
     suspend fun updateStatus(
+        @Url url: String,
         @Body request: StatusUpdateRequest
     ): Response<ApiResponse<Unit>>
     
@@ -144,8 +146,10 @@ interface ApiService {
     
     // ==================== Notifications ====================
     
-    @GET("notifications")
+    // notifications may reside on separate service; call with full URL via @Url
+    @GET
     suspend fun getNotifications(
+        @Url url: String,
         @Query("limit") limit: Int = 20,
         @Query("offset") offset: Int = 0
     ): Response<ListResponse<Notification>>

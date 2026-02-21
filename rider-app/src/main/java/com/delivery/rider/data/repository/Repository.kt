@@ -8,6 +8,7 @@ import com.delivery.rider.data.api.PasscodeLoginRequest
 import com.delivery.rider.data.api.PayoutRequest
 import com.delivery.rider.data.local.SharedPrefManager
 import com.delivery.rider.data.models.*
+import com.delivery.rider.BuildConfig
 import javax.inject.Inject
 
 class AuthRepository @Inject constructor(
@@ -17,7 +18,11 @@ class AuthRepository @Inject constructor(
     
     /** New passcode-based login: phone + 5-digit passcode → JWT + Rider */
     suspend fun passcodeLogin(phone: String, passcode: String): Result<Rider> = try {
-        val response = apiService.passcodeLogin(PasscodeLoginRequest(phone, passcode))
+        val requestObj = PasscodeLoginRequest(phone, passcode)
+        val response = apiService.passcodeLogin(requestObj)
+        // debug log - will print in logcat for all builds now that logging interceptor is enabled
+        android.util.Log.d("AuthRepo", "passcodeLogin request=$requestObj code=${response.code()} success=${response.body()?.success} message=${response.body()?.message}")
+
         if (response.isSuccessful && response.body()?.success == true) {
             val apiResponse = response.body()
             apiResponse?.accessToken?.let { sharedPrefManager.saveAuthToken(it) }
@@ -31,6 +36,7 @@ class AuthRepository @Inject constructor(
             Result.failure(Exception(msg))
         }
     } catch (e: Exception) {
+        android.util.Log.e("AuthRepo", "passcodeLogin exception", e)
         Result.failure(e)
     }
     
@@ -226,8 +232,11 @@ class RiderRepository @Inject constructor(
     suspend fun updateStatus(status: String): Result<Unit> {
         val riderId = sharedPrefManager.getRiderId()
             ?: return Result.failure(Exception("Rider ID not found"))
+        val url = BuildConfig.STATUS_SERVICE_URL + "status/update"
         return try {
-        val response = apiService.updateStatus(com.delivery.rider.data.api.StatusUpdateRequest(riderId, status))
+        val response = apiService.updateStatus(url, com.delivery.rider.data.api.StatusUpdateRequest(riderId, status))
+        // debug log
+        android.util.Log.d("AuthRepo", "updateStatus url=$url status=$status code=${response.code()} success=${response.body()?.success}")
         if (response.isSuccessful && response.body()?.success == true) {
             sharedPrefManager.setOnlineStatus(status == "online")
             Result.success(Unit)
@@ -235,6 +244,7 @@ class RiderRepository @Inject constructor(
             Result.failure(Exception(response.body()?.message ?: "Failed to update status"))
         }
         } catch (e: Exception) {
+            android.util.Log.e("AuthRepo", "updateStatus exception", e)
             Result.failure(e)
         }
     }
@@ -249,6 +259,20 @@ class RiderRepository @Inject constructor(
         } else {
             Result.failure(Exception(response.body()?.message ?: "Failed to get reviews"))
         }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getNotifications(): Result<List<com.delivery.rider.data.models.Notification>> {
+        val url = BuildConfig.NOTIFICATION_SERVICE_URL.trimEnd('/') + "/notifications"
+        return try {
+            val response = apiService.getNotifications(url)
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.success(response.body()?.data ?: emptyList())
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "Failed to fetch notifications"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }

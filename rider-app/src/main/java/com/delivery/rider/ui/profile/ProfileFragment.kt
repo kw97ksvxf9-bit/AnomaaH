@@ -12,6 +12,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.findNavController
 import com.delivery.rider.R
 import com.delivery.rider.ui.auth.LoginActivity
 import com.delivery.rider.ui.viewmodel.AuthViewModel
@@ -38,6 +39,7 @@ class ProfileFragment : Fragment() {
     private lateinit var tvPhone: TextView
     private lateinit var tvBike: TextView
     private lateinit var cardChangePasscode: MaterialCardView
+    private lateinit var cardMessages: MaterialCardView
     private lateinit var btnLogout: MaterialButton
     
     private var isOnline = false
@@ -64,6 +66,7 @@ class ProfileFragment : Fragment() {
         tvPhone = view.findViewById(R.id.tvPhone)
         tvBike = view.findViewById(R.id.tvBike)
         cardChangePasscode = view.findViewById(R.id.cardChangePasscode)
+        cardMessages = view.findViewById(R.id.cardMessages)
         btnLogout = view.findViewById(R.id.btnLogout)
         
         toggleOnlineProfile.setOnClickListener {
@@ -74,6 +77,11 @@ class ProfileFragment : Fragment() {
         }
         
         cardChangePasscode.setOnClickListener { showChangePasscodeDialog() }
+        cardMessages.setOnClickListener {
+            // navigate to notifications screen
+            val navController = requireActivity().findNavController(com.delivery.rider.R.id.nav_host_fragment)
+            navController.navigate(com.delivery.rider.R.id.action_profile_to_notifications)
+        }
         btnLogout.setOnClickListener { showLogoutDialog() }
     }
     

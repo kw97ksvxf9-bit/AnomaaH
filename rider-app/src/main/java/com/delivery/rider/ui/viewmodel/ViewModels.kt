@@ -295,6 +295,25 @@ class RiderViewModel @Inject constructor(
     }
 }
 
+@HiltViewModel
+class NotificationViewModel @Inject constructor(
+    private val riderRepository: com.delivery.rider.data.repository.RiderRepository
+) : ViewModel() {
+    private val _notifications = MutableLiveData<List<com.delivery.rider.data.models.Notification>>(emptyList())
+    val notifications: LiveData<List<com.delivery.rider.data.models.Notification>> = _notifications
+
+    fun loadNotifications() {
+        viewModelScope.launch {
+            riderRepository.getNotifications().onSuccess {
+                _notifications.value = it
+            }.onFailure {
+                // ignore or log
+                android.util.Log.e("NotifVM", "loadNotifications error", it)
+            }
+        }
+    }
+}
+
 sealed class RiderState {
     object Idle : RiderState()
     object Loading : RiderState()

@@ -1,19 +1,10 @@
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:8.2.0'
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22'
-        classpath 'com.google.dagger:hilt-android-gradle-plugin:2.48'
-    }
-}
 
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-kapt'
-apply plugin: 'dagger.hilt.android.plugin'
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.kapt'
+    id 'com.google.dagger.hilt.android'
+}
 
 android {
     namespace "com.delivery.rider"
@@ -28,10 +19,17 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         
-        buildConfigField("String", "API_BASE_URL", "\"https://anomaah.onrender.com/\"")
+        buildConfigField("String", "API_BASE_URL", "\"https://anomaah-auth.onrender.com/\"")
+        // Separate endpoints for microservices
+        buildConfigField("String", "STATUS_SERVICE_URL", "\"https://anomaah-status.onrender.com/\"")
         buildConfigField("String", "ORDER_SERVICE_URL", "\"https://anomaah.onrender.com/\"")
         buildConfigField("String", "TRACKING_SERVICE_URL", "\"https://anomaah.onrender.com/\"")
         buildConfigField("String", "NOTIFICATION_SERVICE_URL", "\"https://anomaah.onrender.com/\"")
+        // when true, app will load OpenStreetMap in a WebView instead of Google Maps (for testing without billing)
+        buildConfigField("boolean", "USE_OSM_FALLBACK", "true")
+        // Mapbox access token (required for mapbox provider)
+        def mapboxToken = project.hasProperty('MAPBOX_ACCESS_TOKEN') ? project.property('MAPBOX_ACCESS_TOKEN') : ''
+        buildConfigField("String", "MAPBOX_ACCESS_TOKEN", "\"${mapboxToken}\"")
         buildConfigField("Boolean", "DEBUG_MODE", "false")
     }
 
@@ -114,14 +112,15 @@ dependencies {
     implementation 'com.google.dagger:hilt-android:2.48'
     kapt 'com.google.dagger:hilt-compiler:2.48'
     
-    // Maps & Location
-    implementation 'com.google.android.gms:play-services-maps:18.2.0'
+    // Location dependency (Google fused location provider)
     implementation 'com.google.android.gms:play-services-location:21.0.1'
-    
+    // Mapbox SDK for Android (map provider replacing Google Maps)
+    // Mapbox SDK stubbed locally; dependency removed
+
     // WebSocket
     implementation 'com.neovisionaries:nv-websocket-client:2.14'
-    
-    // Firebase (Push Notifications)
+
+    // Firebase (Push Notifications) — enabled by default
     implementation 'com.google.firebase:firebase-messaging:23.2.1'
     
     // Image Loading

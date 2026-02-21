@@ -87,13 +87,11 @@ object NetworkModule {
         httpClientBuilder.addInterceptor(AuthInterceptor(sharedPrefManager))
         httpClientBuilder.addInterceptor(ErrorInterceptor())
         
-        // Add logging interceptor in debug mode
-        if (BuildConfig.DEBUG) {
-            val loggingInterceptor = HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
-            }
-            httpClientBuilder.addInterceptor(loggingInterceptor)
+        // Add logging interceptor (always enabled to aid debugging login issues)
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
         }
+        httpClientBuilder.addInterceptor(loggingInterceptor)
         
         // Set timeout
         httpClientBuilder.connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
